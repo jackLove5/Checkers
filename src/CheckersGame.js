@@ -11,9 +11,13 @@ class CheckersGame {
         let board = new CheckersBoard();
 
         const getMovesByPos = (pos) => {
-            const movingPiece = board.squares[pos];
+            const possibleJumps = getPossibleJumps();
+            if (possibleJumps.length > 0) {
+                return possibleJumps.filter(jumpMove => jumpMove.shortNotation.split("x")[0] == pos);
+            }
+            
             let possibleMoves = [];
-            possibleMoves = possibleMoves.concat(getJumpMovesByPos(pos));
+            const movingPiece = board.squares[pos];
             if (movingPiece.color === CheckersGame.PLAYER_BLACK || movingPiece.isKing) {
                 const row = Math.floor((pos - 1) / 4);
                 if (row % 2 === 0) {
@@ -244,7 +248,7 @@ class CheckersGame {
 
         this.getPieceAtPosition = (position) => board.squares[position];
 
-        this.doMove = (origin, dst) => {
+        this.doMove = (origin, dst, longNotation) => {
             if (!origin || !dst) {
                 throw "Invalid move. Must specify origin square and destination square";
             }
@@ -266,20 +270,24 @@ class CheckersGame {
 
             const candMove = [origin, dst];
             let validMoves = getMovesByPos(origin);
-            const foundMove = validMoves.find(move => {
+            const foundMoves = validMoves.filter(move => {
                 const [moveOrigin, moveDst] = move.shortNotation.split(/x|-/);
-                return moveOrigin == origin && moveDst == dst;
+                if (longNotation) {
+                    return longNotation == move.longNotation && moveOrigin == origin && moveDst == dst;
+                } else {
+                    return moveOrigin == origin && moveDst == dst;
+                }
             });
 
-            if (!foundMove) {
+            if (foundMoves.length == 0) {
                 throw `Invalid move. ${candMove} does not exist within ${JSON.stringify(validMoves)}`;
             }
 
-            const possibleJumpMoves = getPossibleJumps();
-            if (possibleJumpMoves.length > 0 && foundMove.capturedPieces.length === 0) {
-                throw `Invalid move. Must jump if possible`;
+            if (foundMoves.length > 1) {
+                throw `Ambiguous move ${candMove}. Must provide long notation`;
             }
 
+            const foundMove = foundMoves[0];
             let capturedPieces = foundMove.capturedPieces;
 
             board.squares[dst] = board.squares[origin];

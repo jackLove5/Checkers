@@ -1186,3 +1186,81 @@ test("Black should be winner if white has no moves", () => {
     expect(game.getWinner()).toEqual(CheckersGame.PLAYER_BLACK);
 
 });
+
+test("getMovesByPosition should not return 15-18 as a playable move when 10x17 could be played", () => {
+    const game = new CheckersGame();
+    game.start();
+    game.doMove("10", "15");
+    game.doMove("21", "17");
+    game.doMove("7", "10");
+    game.doMove("17", "14");
+    const legalMovesFrom15 = game.getMovesByPosition(15);
+    const has15_18 = legalMovesFrom15.find(move => move.shortNotation === "15-18");
+    expect(has15_18).not.toBeTruthy();
+});
+
+test("doMove should not accept 25x2 when there exists more than one such jump", () => {
+    const game = new CheckersGame();
+    game.start();
+    game.doMove("9", "14");
+    game.doMove("24", "20");
+    game.doMove("11", "15");
+    game.doMove("28", "24");
+    game.doMove("6", "9");
+    game.doMove("22", "17");
+    game.doMove("9", "13");
+    game.doMove("32", "28");
+    game.doMove("13", "22");
+    game.doMove("26", "17");
+    game.doMove("2", "6");
+    game.doMove("20", "16");
+    game.doMove("12", "26");
+    game.doMove("30", "23");
+    game.doMove("8", "11");
+    game.doMove("24", "20");
+    game.doMove("15", "18");
+    game.doMove("20", "16");
+    game.doMove("11", "20");
+    game.doMove("28", "24");
+    game.doMove("4", "8");
+    game.doMove("24", "19");
+    game.doMove("8", "11");
+    game.doMove("19", "16");
+    game.doMove("11", "15");
+    game.doMove("16", "12");
+    game.doMove("18", "22");
+    expect(() => game.doMove("25", "2")).toThrow();
+});
+
+test("doMove should accept 25x18x9x2 when playable", () => {
+    const game = new CheckersGame();
+    game.start();
+    game.doMove("9", "14");
+    game.doMove("24", "20");
+    game.doMove("11", "15");
+    game.doMove("28", "24");
+    game.doMove("6", "9");
+    game.doMove("22", "17");
+    game.doMove("9", "13");
+    game.doMove("32", "28");
+    game.doMove("13", "22");
+    game.doMove("26", "17");
+    game.doMove("2", "6");
+    game.doMove("20", "16");
+    game.doMove("12", "26");
+    game.doMove("30", "23");
+    game.doMove("8", "11");
+    game.doMove("24", "20");
+    game.doMove("15", "18");
+    game.doMove("20", "16");
+    game.doMove("11", "20");
+    game.doMove("28", "24");
+    game.doMove("4", "8");
+    game.doMove("24", "19");
+    game.doMove("8", "11");
+    game.doMove("19", "16");
+    game.doMove("11", "15");
+    game.doMove("16", "12");
+    game.doMove("18", "22");
+    expect(() => game.doMove("25", "2", "25x18x9x2")).not.toThrow();
+});
