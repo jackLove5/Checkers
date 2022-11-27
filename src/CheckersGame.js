@@ -10,14 +10,18 @@ class CheckersGame {
         this.players = new Array(CheckersGame.NUM_PLAYERS);
         let board = new CheckersBoard();
 
-        const getMovesByPos = (pos) => {
-            const possibleJumps = getPossibleJumps();
+        const getPlayableMovesByPos = (pos) => {
+            pos = parseInt(pos);
+            const possibleJumps = getPlayableJumpMoves();
             if (possibleJumps.length > 0) {
                 return possibleJumps.filter(jumpMove => jumpMove.shortNotation.split("x")[0] == pos);
             }
             
             let possibleMoves = [];
             const movingPiece = board.squares[pos];
+            if (movingPiece.color != this.turn) {
+                return [];
+            }
             if (movingPiece.color === CheckersGame.PLAYER_BLACK || movingPiece.isKing) {
                 const row = Math.floor((pos - 1) / 4);
                 if (row % 2 === 0) {
@@ -103,7 +107,7 @@ class CheckersGame {
         
 
         const hasMoveByPos = (pos) => {
-            return getMovesByPos(pos).length > 0;
+            return getPlayableMovesByPos(pos).length > 0;
         }
 
         const hasMoves = (player) => {
@@ -116,7 +120,7 @@ class CheckersGame {
             return false;
         }
 
-        const getPossibleJumps = () => {
+        const getPlayableJumpMoves = () => {
             let jumpMoves = [];
             for (let pos = 1; pos <= 32; pos++) {
                 if (board.squares[pos] && board.squares[pos].color === this.turn) {
@@ -244,7 +248,7 @@ class CheckersGame {
         };
 
 
-        this.getMovesByPosition = (pos) => getMovesByPos(pos);
+        this.getPlayableMovesByPosition = (pos) => getPlayableMovesByPos(pos);
 
         this.getPieceAtPosition = (position) => board.squares[position];
 
@@ -269,7 +273,7 @@ class CheckersGame {
             dst = parseInt(dst);
 
             const candMove = [origin, dst];
-            let validMoves = getMovesByPos(origin);
+            let validMoves = getPlayableMovesByPos(origin);
             const foundMoves = validMoves.filter(move => {
                 const [moveOrigin, moveDst] = move.shortNotation.split(/x|-/);
                 if (longNotation) {

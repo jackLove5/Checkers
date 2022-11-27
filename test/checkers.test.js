@@ -1187,14 +1187,14 @@ test("Black should be winner if white has no moves", () => {
 
 });
 
-test("getMovesByPosition should not return 15-18 as a playable move when 10x17 could be played", () => {
+test("getPlayableMovesByPosition should only return jump moves when a jump is playable", () => {
     const game = new CheckersGame();
     game.start();
     game.doMove("10", "15");
     game.doMove("21", "17");
     game.doMove("7", "10");
     game.doMove("17", "14");
-    const legalMovesFrom15 = game.getMovesByPosition(15);
+    const legalMovesFrom15 = game.getPlayableMovesByPosition(15);
     const has15_18 = legalMovesFrom15.find(move => move.shortNotation === "15-18");
     expect(has15_18).not.toBeTruthy();
 });
@@ -1263,4 +1263,18 @@ test("doMove should accept 25x18x9x2 when playable", () => {
     game.doMove("16", "12");
     game.doMove("18", "22");
     expect(() => game.doMove("25", "2", "25x18x9x2")).not.toThrow();
+});
+
+test("getPlayableMovesByPosition should accept string as input", () => {
+    const game = new CheckersGame();
+    game.start();
+    const moves = game.getPlayableMovesByPosition("1");
+    expect(moves.length).toBe(0);
+});
+
+test("getPlayableMovesByPosition should only return moves that are playable", () => {
+    const game = new CheckersGame();
+    game.start();
+    const moves = game.getPlayableMovesByPosition("23");
+    expect(moves.length).toBe(0);
 });
