@@ -1,16 +1,5 @@
-const {Piece } = require('../src/Piece');
-const { CheckersBoard } = require('../src/CheckersBoard');
-const { CheckersGame } = require('../src/CheckersGame');
-
-test('Should be able to create a Checkers board', () => {
-    const board = new CheckersBoard();
-    expect(board).toBeTruthy();
-});
-
-test('Game board should have exactly 32 playable squares', () => {
-    const board = new CheckersBoard();
-    expect(Object.keys(board.squares).length).toBe(32);
-});
+import { Piece }  from "../src/Piece.js";
+import { CheckersGame }  from "../src/CheckersGame.js";
 
 test('Should be able to create a Checkers game', () => {
     const game = new CheckersGame();
@@ -56,7 +45,6 @@ test('Black should have 12 pieces at the start of a new game', () => {
 test('Black must be able to make a move at the beginning of a new game', () => {
     const game = new CheckersGame();
     game.start();
-    //game.doMove("10", "15");
     game.doMove("10", "15");
 });
 
@@ -333,7 +321,7 @@ test('After starting a new game, there should be a regular white piece at positi
 test("The game's board must not be accessible", () => {
     const game = new CheckersGame();
     game.start();
-    expect(() => { game.board.squares["32"] = null }).toThrow();
+    expect(() => { game.board["32"] = null }).toThrow();
 });
 
 

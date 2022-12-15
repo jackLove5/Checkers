@@ -1,6 +1,6 @@
-const {CheckersBoard} = require("./CheckersBoard");
+import {Piece } from "./Piece.js";
 
-class CheckersGame {
+export class CheckersGame {
     static STARTING_PIECE_COUNT_PER_PLAYER = 12;
     static NUM_PLAYERS = 2;
     static PLAYER_WHITE = 'w';
@@ -8,7 +8,16 @@ class CheckersGame {
 
     constructor() {
         this.players = new Array(CheckersGame.NUM_PLAYERS);
-        let board = new CheckersBoard();
+        let board = {};
+        for (let i = 1; i <= 32; i++) {
+            if (i < 13) {
+                board["" + i] = new Piece("b");
+            } else if (i < 21) {
+                board["" + i] = null;
+            } else {
+                board["" + i] = new Piece("w");
+            }
+        }
 
         const getPlayableMovesByPos = (pos) => {
             pos = parseInt(pos);
@@ -18,14 +27,15 @@ class CheckersGame {
             }
             
             let possibleMoves = [];
-            const movingPiece = board.squares[pos];
-            if (movingPiece.color != this.turn) {
+            const movingPiece = board[pos];
+            if (!movingPiece || movingPiece.color != this.turn) {
                 return [];
             }
+
             if (movingPiece.color === CheckersGame.PLAYER_BLACK || movingPiece.isKing) {
                 const row = Math.floor((pos - 1) / 4);
                 if (row % 2 === 0) {
-                    if (pos + 4 <= 32 && board.squares[pos + 4] === null) {
+                    if (pos + 4 <= 32 && board[pos + 4] === null) {
                         possibleMoves = possibleMoves.concat({
                             shortNotation: `${pos}-${pos+4}`,
                             longNotation: `${pos}-${pos+4}`,
@@ -33,7 +43,7 @@ class CheckersGame {
                         });
                     }
 
-                    if (pos + 5 <= 32 && pos % 8 !== 4 && board.squares[pos + 5] === null) {
+                    if (pos + 5 <= 32 && pos % 8 !== 4 && board[pos + 5] === null) {
                         possibleMoves = possibleMoves.concat({
                             shortNotation: `${pos}-${pos+5}`,
                             longNotation: `${pos}-${pos+5}`,
@@ -43,7 +53,7 @@ class CheckersGame {
                 
                 } else {
 
-                    if (pos + 4 <= 32 && board.squares[pos + 4] === null) {
+                    if (pos + 4 <= 32 && board[pos + 4] === null) {
                         possibleMoves = possibleMoves.concat({
                             shortNotation: `${pos}-${pos+4}`,
                             longNotation: `${pos}-${pos+4}`,
@@ -51,7 +61,7 @@ class CheckersGame {
                         });
                     }
 
-                    if (pos + 3 <= 32 && pos % 8 !== 5 && board.squares[pos + 3] === null) {
+                    if (pos + 3 <= 32 && pos % 8 !== 5 && board[pos + 3] === null) {
                         possibleMoves = possibleMoves.concat({
                             shortNotation: `${pos}-${pos+3}`,
                             longNotation: `${pos}-${pos+3}`,
@@ -66,7 +76,7 @@ class CheckersGame {
                 const row = Math.floor((pos - 1) / 4);
                 if (row % 2 === 0) {
 
-                    if (pos - 4 >= 1 && board.squares[pos - 4] === null) {
+                    if (pos - 4 >= 1 && board[pos - 4] === null) {
                         possibleMoves = possibleMoves.concat({
                             shortNotation: `${pos}-${pos-4}`,
                             longNotation: `${pos}-${pos-4}`,
@@ -74,7 +84,7 @@ class CheckersGame {
                         });
                     }
 
-                    if (pos - 3 >= 1 && pos % 8 !== 4 && board.squares[pos - 3] === null) {
+                    if (pos - 3 >= 1 && pos % 8 !== 4 && board[pos - 3] === null) {
                         possibleMoves = possibleMoves.concat({
                             shortNotation: `${pos}-${pos-3}`,
                             longNotation: `${pos}-${pos-3}`,
@@ -83,7 +93,7 @@ class CheckersGame {
                     }
                 } else {
     
-                    if (pos - 4 >= 1 && board.squares[pos - 4] === null) {
+                    if (pos - 4 >= 1 && board[pos - 4] === null) {
                         possibleMoves = possibleMoves.concat({
                             shortNotation: `${pos}-${pos-4}`,
                             longNotation: `${pos}-${pos-4}`,
@@ -91,7 +101,7 @@ class CheckersGame {
                         });
                     }
 
-                    if (pos - 5 >= 1 && pos % 8 !== 5 && board.squares[pos - 5] === null) {
+                    if (pos - 5 >= 1 && pos % 8 !== 5 && board[pos - 5] === null) {
                         possibleMoves = possibleMoves.concat({
                             shortNotation: `${pos}-${pos-5}`,
                             longNotation: `${pos}-${pos-5}`,
@@ -112,7 +122,7 @@ class CheckersGame {
 
         const hasMoves = (player) => {
             for (let pos = 1; pos <= 32; pos++) {
-                if (board.squares[pos] && board.squares[pos].color === player && hasMoveByPos(pos)) {
+                if (board[pos] && board[pos].color === player && hasMoveByPos(pos)) {
                     return true;
                 }
             }
@@ -123,7 +133,7 @@ class CheckersGame {
         const getPlayableJumpMoves = () => {
             let jumpMoves = [];
             for (let pos = 1; pos <= 32; pos++) {
-                if (board.squares[pos] && board.squares[pos].color === this.turn) {
+                if (board[pos] && board[pos].color === this.turn) {
                     const jumps = getJumpMovesByPos(pos);
                     jumpMoves = jumpMoves.concat(jumps);
                 }
@@ -139,11 +149,11 @@ class CheckersGame {
             }
             let jumpMoves = [];
 
-            if (board.squares[pos] && board.squares[pos].color === this.turn) {
+            if (board[pos] && board[pos].color === this.turn) {
                 const row = Math.floor((pos - 1) / 4);
-                if (board.squares[pos].color === CheckersGame.PLAYER_BLACK || board.squares[pos].isKing) {
+                if (board[pos].color === CheckersGame.PLAYER_BLACK || board[pos].isKing) {
                     if (row % 2 === 0) {
-                        if (pos + 9 <= 32 && pos % 4 !== 0 && board.squares[pos + 9] === null && board.squares[pos + 5] && board.squares[pos + 5].color !== this.turn) {
+                        if (pos + 9 <= 32 && pos % 4 !== 0 && board[pos + 9] === null && board[pos + 5] && board[pos + 5].color !== this.turn) {
                             jumpMoves.push({
                                 shortNotation: `${pos}x${pos+9}`,
                                 longNotation: `${pos}x${pos+9}`,
@@ -151,7 +161,7 @@ class CheckersGame {
                             });
                         }
     
-                        if (pos + 7 <= 32 && pos % 4 !== 1 && board.squares[pos + 7] === null && board.squares[pos + 4] && board.squares[pos + 4].color !== this.turn) {
+                        if (pos + 7 <= 32 && pos % 4 !== 1 && board[pos + 7] === null && board[pos + 4] && board[pos + 4].color !== this.turn) {
                             jumpMoves.push({
                                 shortNotation: `${pos}x${pos+7}`,
                                 longNotation: `${pos}x${pos+7}`,
@@ -159,7 +169,7 @@ class CheckersGame {
                             });
                         }
                     } else {
-                        if (pos + 9 <= 32 && pos % 4 !== 0 && board.squares[pos + 9] === null && board.squares[pos + 4] && board.squares[pos + 4].color !== this.turn) {
+                        if (pos + 9 <= 32 && pos % 4 !== 0 && board[pos + 9] === null && board[pos + 4] && board[pos + 4].color !== this.turn) {
                             jumpMoves.push({
                                 shortNotation: `${pos}x${pos+9}`,
                                 longNotation: `${pos}x${pos+9}`,
@@ -167,7 +177,7 @@ class CheckersGame {
                             });
                         }
     
-                        if (pos + 7 <= 32 && pos % 4 !== 1 && board.squares[pos + 7] === null && board.squares[pos + 3] && board.squares[pos + 3].color !== this.turn) {
+                        if (pos + 7 <= 32 && pos % 4 !== 1 && board[pos + 7] === null && board[pos + 3] && board[pos + 3].color !== this.turn) {
                             jumpMoves.push({
                                 shortNotation: `${pos}x${pos+7}`,
                                 longNotation: `${pos}x${pos+7}`,
@@ -177,9 +187,9 @@ class CheckersGame {
                     }
                 }
 
-                if (board.squares[pos].color === CheckersGame.PLAYER_WHITE || board.squares[pos].isKing) {
+                if (board[pos].color === CheckersGame.PLAYER_WHITE || board[pos].isKing) {
                     if (row % 2 === 1) {
-                        if (pos - 9 >= 1 && pos % 4 !== 1 && board.squares[pos - 9] === null && board.squares[pos - 5] && board.squares[pos - 5].color !== this.turn) {
+                        if (pos - 9 >= 1 && pos % 4 !== 1 && board[pos - 9] === null && board[pos - 5] && board[pos - 5].color !== this.turn) {
                             jumpMoves.push({
                                 shortNotation: `${pos}x${pos-9}`,
                                 longNotation: `${pos}x${pos-9}`,
@@ -187,7 +197,7 @@ class CheckersGame {
                             });
                         }
     
-                        if (pos - 7 >= 1 && pos % 4 !== 0 && board.squares[pos - 7] === null && board.squares[pos - 4] && board.squares[pos - 4].color !== this.turn) {
+                        if (pos - 7 >= 1 && pos % 4 !== 0 && board[pos - 7] === null && board[pos - 4] && board[pos - 4].color !== this.turn) {
                             jumpMoves.push({
                                 shortNotation: `${pos}x${pos-7}`,
                                 longNotation: `${pos}x${pos-7}`,
@@ -195,7 +205,7 @@ class CheckersGame {
                             });
                         }
                     } else {
-                        if (pos - 9 >= 1 && pos % 4 !== 1 && board.squares[pos - 9] === null && board.squares[pos - 4] && board.squares[pos - 4].color !== this.turn) {
+                        if (pos - 9 >= 1 && pos % 4 !== 1 && board[pos - 9] === null && board[pos - 4] && board[pos - 4].color !== this.turn) {
                             jumpMoves.push({
                                 shortNotation: `${pos}x${pos-9}`,
                                 longNotation: `${pos}x${pos-9}`,
@@ -203,7 +213,7 @@ class CheckersGame {
                             });
                         }
     
-                        if (pos - 7 >= 1 && pos % 4 !== 0 && board.squares[pos - 7] === null && board.squares[pos - 3] && board.squares[pos - 3].color !== this.turn) {
+                        if (pos - 7 >= 1 && pos % 4 !== 0 && board[pos - 7] === null && board[pos - 3] && board[pos - 3].color !== this.turn) {
                             jumpMoves.push({
                                 shortNotation: `${pos}x${pos-7}`,
                                 longNotation: `${pos}x${pos-7}`,
@@ -218,18 +228,18 @@ class CheckersGame {
             let results = [];
             jumpMoves.forEach(jumpMove => {
                 
-                const capturedPiece = board.squares[jumpMove.capturedPieces[0]];
+                const capturedPiece = board[jumpMove.capturedPieces[0]];
                 const [origin, dst] = jumpMove.shortNotation.split('x');
-                const jumpingPiece = board.squares[origin];
+                const jumpingPiece = board[origin];
                 
-                board.squares[jumpMove.capturedPieces[0]] = null;
-                board.squares[dst] = jumpingPiece;
-                board.squares[origin] = null;
+                board[jumpMove.capturedPieces[0]] = null;
+                board[dst] = jumpingPiece;
+                board[origin] = null;
                 let subJumps = getJumpMovesByPos(dst);
 
-                board.squares[dst] = null;
-                board.squares[origin] = jumpingPiece;
-                board.squares[jumpMove.capturedPieces[0]] = capturedPiece;
+                board[dst] = null;
+                board[origin] = jumpingPiece;
+                board[jumpMove.capturedPieces[0]] = capturedPiece;
 
                 if (subJumps.length > 0) {
                     subJumps.forEach(subJump => {
@@ -250,7 +260,7 @@ class CheckersGame {
 
         this.getPlayableMovesByPosition = (pos) => getPlayableMovesByPos(pos);
 
-        this.getPieceAtPosition = (position) => board.squares[position];
+        this.getPieceAtPosition = (position) => board[position];
 
         this.doMove = (origin, dst, longNotation) => {
             if (!origin || !dst) {
@@ -265,7 +275,7 @@ class CheckersGame {
                 throw "Invalid move. Origin square is empty";
             }
 
-            if (board.squares[origin].color !== this.turn) {
+            if (board[origin].color !== this.turn) {
                 throw "Invalid move. It is the other player's turn";
             }
 
@@ -294,17 +304,17 @@ class CheckersGame {
             const foundMove = foundMoves[0];
             let capturedPieces = foundMove.capturedPieces;
 
-            board.squares[dst] = board.squares[origin];
-            board.squares[origin] = null;
-            capturedPieces.forEach(p => board.squares[p] = null);
+            board[dst] = board[origin];
+            board[origin] = null;
+            capturedPieces.forEach(p => board[p] = null);
 
             if (this.turn === CheckersGame.PLAYER_BLACK) {
-                if (dst >= 29 && dst <= 32 && !board.squares[dst].isKing) {
-                    board.squares[dst].isKing = true;
+                if (dst >= 29 && dst <= 32 && !board[dst].isKing) {
+                    board[dst].isKing = true;
                 }
             } else {
-                if (dst >= 1 && dst <= 4 && !board.squares[dst].isKing) {
-                    board.squares[dst].isKing = true;
+                if (dst >= 1 && dst <= 4 && !board[dst].isKing) {
+                    board[dst].isKing = true;
                 }
             }
 
@@ -331,7 +341,3 @@ class CheckersGame {
         this.turn = CheckersGame.PLAYER_BLACK;
     }
 }
-
-module.exports = {
-    CheckersGame: CheckersGame
-};

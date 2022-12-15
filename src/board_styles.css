@@ -1,0 +1,41 @@
+#gameboard {
+    width: 500px;
+    height: 500px;
+    display: grid;
+    grid-template-rows: repeat(8, 12.5%);
+    grid-template-columns: repeat(8, 12.5%);
+    background-color: tan;
+}
+
+[data-pos] {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color:brown;
+}
+
+
+.piece {
+    height: 90%;
+    width: 90%;
+    border-radius: 100%;
+}
+
+.white {
+    background-color: white;
+}
+
+.black {
+    background-color: black;
+}
+
+.king {
+    background-color: red;
+}
+
+.highlight {
+    height: 20%;
+    width: 20%;
+    border-radius: 100%;
+    background-color: blue;
+}
