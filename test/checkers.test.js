@@ -1266,3 +1266,22 @@ test("getPlayableMovesByPosition should only return moves that are playable", ()
     const moves = game.getPlayableMovesByPosition("23");
     expect(moves.length).toBe(0);
 });
+
+
+test("Should be able to play the move 2x11x18x9x2", () => {
+    const game = new CheckersGame();
+    game.start();
+    game.doMove("9", "13");
+    game.doMove("22", "18");
+    game.doMove("10", "15");
+    game.doMove("18", "14");
+    game.doMove("11", "16");
+    game.doMove("14", "10");
+    game.doMove("7", "14");
+    game.doMove("24", "20");
+    game.doMove("2", "7");
+    game.doMove("20", "2");
+    game.doMove("3", "7");
+    expect(() => game.doMove("2", "2", "2x11x18x9x2")).not.toThrow();
+
+});

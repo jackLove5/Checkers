@@ -9,6 +9,8 @@ export class CheckersGame {
     constructor() {
         this.players = new Array(CheckersGame.NUM_PLAYERS);
         let board = {};
+        let stateStack = [];
+        let moveStack = [];
         for (let i = 1; i <= 32; i++) {
             if (i < 13) {
                 board["" + i] = new Piece("b");
@@ -266,10 +268,10 @@ export class CheckersGame {
             if (!origin || !dst) {
                 throw "Invalid move. Must specify origin square and destination square";
             }
-
+/*
             if (this.getPieceAtPosition(dst) !== null) {
-                throw "Invalid move. Destination square is not empty";
-            }
+                throw `Invalid move ${origin}-${dst}. Destination square is not empty. stateStack: ${stateStack} moveStack ${moveStack}`;
+            }*/
 
             if (this.getPieceAtPosition(origin) === null) {
                 throw "Invalid move. Origin square is empty";
@@ -302,10 +304,15 @@ export class CheckersGame {
             }
 
             const foundMove = foundMoves[0];
+            stateStack.push(JSON.stringify(board));
+            moveStack.push(JSON.stringify(foundMove));
             let capturedPieces = foundMove.capturedPieces;
 
-            board[dst] = board[origin];
-            board[origin] = null;
+            if (dst !== origin) {
+                board[dst] = board[origin];
+                board[origin] = null;
+            }
+
             capturedPieces.forEach(p => board[p] = null);
 
             if (this.turn === CheckersGame.PLAYER_BLACK) {
@@ -319,7 +326,22 @@ export class CheckersGame {
             }
 
             this.turn = this.turn === CheckersGame.PLAYER_BLACK ? CheckersGame.PLAYER_WHITE : CheckersGame.PLAYER_BLACK;
+
         };
+
+        this.undoLastMove = () => {
+
+            if (stateStack.length == 0) {
+                throw 'No move to undo';
+            }
+
+            const newState = stateStack[stateStack.length - 1];
+            stateStack.pop();
+            moveStack.pop();
+            board = JSON.parse(newState);
+
+            this.turn = this.turn === CheckersGame.PLAYER_BLACK ? CheckersGame.PLAYER_WHITE : CheckersGame.PLAYER_BLACK;
+        }
 
         this.getWinner = () => {
             if (this.turn === CheckersGame.PLAYER_BLACK && !hasMoves(CheckersGame.PLAYER_BLACK)) {

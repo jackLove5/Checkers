@@ -25,4 +25,11 @@ window.addEventListener('load', (e) => {
     document.body.appendChild(board);
     document.body.appendChild(movesDiv);
     document.body.appendChild(winnerDiv);
+
+    const botButton = document.getElementById("bot");
+    const evalLabel = document.getElementById("eval");
+    botButton.addEventListener("click", (e) => {
+        const evaluation = board.doBotMove();
+        evalLabel.innerHTML = `board evaluation: ${evaluation}`;
+    });
 });

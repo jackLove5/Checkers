@@ -1,3 +1,4 @@
+import { CheckersAi } from "./CheckersAi.js";
 import { CheckersGame } from "./CheckersGame.js";
 
 class MoveOptions {
@@ -44,9 +45,36 @@ export class CheckersBoard extends HTMLElement{
         let div = document.createElement("div");
         this.createDiv(div);
         this.game.start();
+        this.ai = new CheckersAi(this.game);
         this.drawBoard();
     }
 
+    doBotMove() {
+        const [move, v] = this.ai.getNextMove();
+        const [origin, dst] = move.shortNotation.split(/x|-/);
+        const longNotation = move.longNotation;
+        this.game.doMove(origin, dst, longNotation);
+        const moveText = longNotation;
+        const moveEvent = new CustomEvent('move', { 
+            bubbles: true,
+            detail: { moveText },
+          });
+        
+        this.dispatchEvent(moveEvent);
+
+        if (this.game.getWinner()) {
+            const text = this.game.getWinner() === CheckersGame.PLAYER_BLACK ? "Black Wins!" : "White Wins!";
+            const winEvent = new CustomEvent('win', {
+                bubbles: true,
+                detail: { text }
+            });
+
+            this.dispatchEvent(winEvent);
+        }
+        
+        this.drawBoard();
+        return v;
+    }
     drawBoard() {
         for (let i = 1; i <= 32; i++) {
             const squareDiv = this.shadowRoot.querySelector(`[data-pos="${i}"]`);
@@ -113,6 +141,7 @@ export class CheckersBoard extends HTMLElement{
                         this.game.doMove(origin, dst, this.moveOptionsPtr.move.longNotation);
                         moveText = this.moveOptionsPtr.move.longNotation;
                     } else {
+
                         this.game.doMove(origin, dst);
                         moveText = this.moveOptionsPtr.move.shortNotation;
                     }
