@@ -1,5 +1,6 @@
 import { Piece }  from "../src/Piece.js";
 import { CheckersGame }  from "../src/CheckersGame.js";
+import { CheckersAi } from "../src/CheckersAi.js";
 
 test('Should be able to create a Checkers game', () => {
     const game = new CheckersGame();
@@ -1284,4 +1285,333 @@ test("Should be able to play the move 2x11x18x9x2", () => {
     game.doMove("3", "7");
     expect(() => game.doMove("2", "2", "2x11x18x9x2")).not.toThrow();
 
+});
+
+test("Pieces should be reset after undoing the first move", () => {
+    const game = new CheckersGame();
+    game.start();
+    game.doMove("9", "13");
+    game.undoLastMove();
+
+    const blackPiece = new Piece('b');
+    const whitePiece = new Piece('w');
+    for (let i = 1; i <= 32; i++) {
+        const piece = game.getPieceAtPosition(i);
+        if (i <= 12) {
+            expect(piece).toEqual(blackPiece);
+        } else if (i >= 21) {
+            expect(piece).toEqual(whitePiece);
+        } else {
+            expect(piece).toBeNull();
+        }
+    }
+
+});
+
+test("Should be black's turn after undoing the first move", () => {
+    const game = new CheckersGame();
+    game.start();
+    game.doMove("9", "13");
+    game.undoLastMove();
+
+    expect(game.turn).toBe(CheckersGame.PLAYER_BLACK);
+});
+
+test("Should be white's turn after undoing the second move", () => {
+    const game = new CheckersGame();
+    game.start();
+    game.doMove("9", "13");
+    game.doMove("22", "18");
+    game.undoLastMove();
+
+    expect(game.turn).toBe(CheckersGame.PLAYER_WHITE);
+});
+
+test("Should throw error when trying to undo move at the beginning of game", () => {
+    const game = new CheckersGame();
+    game.start();
+    expect(() => game.undoLastMove()).toThrow();
+});
+
+test("should be black piece on 7, white piece on 10, and empty on 14 after undoing move 7x14", () => {
+    const game = new CheckersGame();
+    game.start();
+    game.doMove("9", "13");
+    game.doMove("22", "18");
+    game.doMove("10", "15");
+    game.doMove("18", "14");
+    game.doMove("11", "16");
+    game.doMove("14", "10");
+    game.doMove("7", "14");
+    game.undoLastMove();
+
+    const blackPiece = new Piece('b');
+    const whitePiece = new Piece('w');
+
+    expect(game.getPieceAtPosition(7)).toEqual(blackPiece);
+    expect(game.getPieceAtPosition(10)).toEqual(whitePiece);
+    expect(game.getPieceAtPosition(14)).toBeNull();
+});
+
+test("board evaluation should be 0 at beginning of the game", () => {
+    const game = new CheckersGame();
+    game.start();
+
+    const ai = new CheckersAi(game);
+    const utility = ai.getBoardEvaluation(game);
+    expect(utility).toBe(0);
+});
+
+test("board evaluation should be > 0 when black has more pieces than white", () => {
+    const game = new CheckersGame();
+    game.start();
+    game.doMove("10", "15");
+    game.doMove("24", "19");
+    game.doMove("15", "24");
+
+    const ai = new CheckersAi(game);
+    const utility = ai.getBoardEvaluation(game);
+    expect(utility).toBeGreaterThan(0);
+});
+
+test("board evaluation should be < 0 when white has more pieces than black", () => {
+    const game = new CheckersGame();
+    game.start();
+    game.doMove("10", "15");
+    game.doMove("23", "18");
+    game.doMove("15", "19");
+    game.doMove("24", "15");
+
+    const ai = new CheckersAi(game);
+    const utility = ai.getBoardEvaluation(game);
+    expect(utility).toBeLessThan(0);
+});
+
+test("board evaluation should be INF when black wins", () => {
+    const game = new CheckersGame();
+    game.start();
+    game.doMove("10", "15");
+    game.doMove("22", "18");
+    game.doMove("15", "22");
+    game.doMove("25", "18");
+    game.doMove("11", "15");
+    game.doMove("18", "11");
+    game.doMove("8", "15");
+    game.doMove("21", "17");
+
+    game.doMove("9", "13");
+    game.doMove("17", "14");
+
+    game.doMove("6", "10");
+    game.doMove("26", "22");
+
+    game.doMove("10", "26");
+    game.doMove("31", "22");
+
+    game.doMove("4", "8");
+    game.doMove("29", "25");
+
+    game.doMove("8", "11");
+    game.doMove("23", "18");
+
+
+    game.doMove("13", "17");
+    game.doMove("22", "13");
+
+
+    game.doMove("15", "29");
+    game.doMove("30", "26");
+
+    game.doMove("29", "25");
+    game.doMove("26", "23");
+    game.doMove("25", "22");
+
+    game.doMove("24", "19");
+    game.doMove("11", "16");
+
+    game.doMove("19", "15");
+    game.doMove("5", "9");
+
+    game.doMove("13", "6");
+    game.doMove("1", "26");
+    game.doMove("27", "24");
+    game.doMove("26", "31");
+    game.doMove("24", "19");
+    game.doMove("16", "23");
+    game.doMove("32", "27");
+    game.doMove("23", "32");
+    game.doMove("28", "24");
+    game.doMove("32", "27");
+    game.doMove("24", "19");
+    game.doMove("27", "23");
+
+    game.doMove("19", "15");
+    game.doMove("23", "19");
+
+    game.doMove("15", "10");
+    game.doMove("7", "14");
+
+    const ai = new CheckersAi(game);
+    const utility = ai.getBoardEvaluation(game);
+    expect(utility).toEqual(Infinity);
+});
+
+test("board evaluation should be -INF when white wins", () => {
+    const game = new CheckersGame();
+    game.start();
+    game.doMove("10", "15");
+    game.doMove("21", "17");
+    game.doMove("6", "10");
+    game.doMove("17", "13");
+    game.doMove("11", "16");
+    game.doMove("13", "6");
+    game.doMove("2", "9");
+    game.doMove("24", "19");
+
+    game.doMove("15", "24");
+    game.doMove("27", "2");
+
+    game.doMove("10", "15");
+    game.doMove("28", "24");
+
+    game.doMove("9", "14");
+    game.doMove("23", "18");
+
+    game.doMove("14", "23");
+    game.doMove("26", "10");
+
+    game.doMove("1", "6");
+    game.doMove("10", "1");
+
+
+    game.doMove("5", "9");
+    game.doMove("2", "6");
+
+    game.doMove("8", "11");
+    game.doMove("6", "13");
+
+    game.doMove("3", "7");
+    game.doMove("1", "6");
+    game.doMove("11", "15");
+
+    game.doMove("22", "18");
+    game.doMove("15", "22");
+
+    game.doMove("25", "18");
+    game.doMove("12", "16");
+
+    game.doMove("13", "17");
+    game.doMove("4", "8");
+    game.doMove("18", "15");
+    game.doMove("8", "11");
+    game.doMove("15", "8");
+    game.doMove("7", "11");
+    game.doMove("6", "10");
+    game.doMove("16", "20");
+    game.doMove("10", "15");
+    game.doMove("11", "18");
+    game.doMove("17", "21");
+    game.doMove("20", "27");
+    game.doMove("32", "14")
+
+    const ai = new CheckersAi(game);
+    const utility = ai.getBoardEvaluation(game);
+    expect(utility).toEqual(-Infinity);
+});
+
+test("getNextMove should not return null when all moves result in a win", () => {
+
+    const game = new CheckersGame();
+    game.start();
+    game.doMove("11", "15");
+    game.doMove("21", "17");
+    game.doMove("8", "11");
+    game.doMove("24", "19");
+    game.doMove("15", "24");
+    game.doMove("27", "20");
+    game.doMove("11", "15");
+    game.doMove("23", "19");
+    game.doMove("15", "24");
+    game.doMove("28", "19");
+    game.doMove("10", "15");
+    game.doMove("19", "10");
+    game.doMove("7", "21");
+    game.doMove("22", "18");
+    game.doMove("9", "14");
+    game.doMove("18", "9");
+    game.doMove("5", "14");
+    game.doMove("25", "22");
+    game.doMove("6", "10");
+    game.doMove("22", "18");
+    game.doMove("14", "23");
+    game.doMove("26", "19");
+    game.doMove("1", "6");
+    game.doMove("29", "25");
+    game.doMove("2", "7");
+    game.doMove("30", "26");
+    game.doMove("21", "30");
+    game.doMove("31", "27");
+    game.doMove("30", "16");
+    game.doMove("20", "2", "20x11x2");
+    game.doMove("6", "9");
+    game.doMove("2", "6");
+    game.doMove("10", "15");
+    game.doMove("6", "13");
+    game.doMove("12", "16");
+    game.doMove("13", "17");
+    game.doMove("3", "7");
+    game.doMove("17", "21");
+    game.doMove("4", "8");
+    game.doMove("21", "25");
+    game.doMove("7", "10");
+    game.doMove("25", "29");
+    game.doMove("8", "11");
+    game.doMove("29", "25");
+    game.doMove("10", "14");
+    game.doMove("25", "30");
+    game.doMove("14", "18");
+    game.doMove("27", "23");
+    game.doMove("18", "27");
+    game.doMove("32", "23");
+    game.doMove("16", "20");
+    game.doMove("30", "26");
+    game.doMove("20", "24");
+    game.doMove("23", "19");
+    game.doMove("15", "18");
+    game.doMove("19", "15");
+    game.doMove("11", "16");
+    game.doMove("15", "11");
+    game.doMove("24", "27");
+    game.doMove("26", "23");
+    game.doMove("27", "32");
+    game.doMove("23", "14");
+    game.doMove("32", "27");
+    game.doMove("11", "7");
+    game.doMove("27", "23");
+    game.doMove("7", "3");
+    game.doMove("16", "19");
+    game.doMove("3", "7");
+    game.doMove("19", "24");
+    game.doMove("7", "11");
+    game.doMove("24", "28");
+    game.doMove("11", "15");
+    game.doMove("28", "32");
+    game.doMove("14", "17");
+    game.doMove("32", "27");
+    game.doMove("15", "11");
+    game.doMove("23", "18");
+    game.doMove("11", "16");
+    game.doMove("27", "24");
+    game.doMove("16", "12");
+    game.doMove("24", "27");
+    game.doMove("12", "16");
+    game.doMove("27", "23");
+    game.doMove("16", "12");
+    game.doMove("23", "19");
+
+
+    const ai = new CheckersAi(game);
+
+    const [move, v] = ai.getNextMove();
+    expect(move).not.toBeNull();
 });

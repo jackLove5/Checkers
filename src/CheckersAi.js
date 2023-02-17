@@ -31,7 +31,7 @@ export class CheckersAi {
                         return [move, v];
                     }
 
-                    if (v > a) {
+                    if (v >= a) {
                         a = v;
                         moveToReturn = move;
                     }
@@ -71,7 +71,7 @@ export class CheckersAi {
                     }
 
 
-                    if (v < b) {
+                    if (v <= b) {
                         b = v;
                         moveToReturn = move;
                     }
