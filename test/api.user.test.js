@@ -7,7 +7,6 @@ const Chance = require('chance');
 const chance = new Chance();
 
 const User = require('../models/user')
-
 const bcrypt = require('bcrypt')
 
 describe('/api/user/', () => {
@@ -29,7 +28,7 @@ describe('/api/user/', () => {
         await db.disconnect();
     });
 
-    describe('/register', () => {
+    describe('/register POST', () => {
         describe('Return status 200 when', () => {
             test('a new user successfully registers', async () => {
                 const username = chance.word({length: 10});
@@ -387,7 +386,7 @@ describe('/api/user/', () => {
         });
     });
 
-    describe('/login', () => {
+    describe('/login POST', () => {
         describe('Return status 200 when', () => {
             test('credentials match an existing user record', async () => {
                 const username = chance.word({length: 10});
@@ -542,75 +541,7 @@ describe('/api/user/', () => {
         });
     });
 
-    describe('/rankings', () => {
-        test('should return 200 status', async () => {
-            const res = await request(app).get('/api/user/rankings');
-
-            expect(res).toBeTruthy();
-            expect(res.statusCode).toBe(200);
-        });
-
-        test('should return a list of all users in database', async () => {
-            const numUsers = await User.count({});
-
-            const res = await request(app).get('/api/user/rankings');
-
-            expect(res.body.users).toBeTruthy();
-            expect(res.body.users.length).toBe(numUsers);
-        });
-
-        test('should not include password hashes in the result', async () => {
-            const res = await request(app).get('/api/user/rankings');
-
-            expect(res.body.users.length).toBeGreaterThan(0);
-            expect(res.body.users.every(user => user.password === undefined)).toBeTruthy();
-        });
-
-        test('should include username in the result', async () => {
-            const res = await request(app).get('/api/user/rankings');
-
-            expect(res.body.users.length).toBeGreaterThan(0);
-            expect(res.body.users.every(user => user.username)).toBeTruthy();
-        });
-
-        test('should include rating in the result', async () => {
-            const res = await request(app).get('/api/user/rankings');
-
-            expect(res.body.users.length).toBeGreaterThan(0);
-            expect(res.body.users.every(user => user.rating)).toBeTruthy();
-        });
-
-        test('should sort result by rating (descending)', async () => {
-
-            const newUsers = [];
-            for (let i = 0; i < 5; i++) {
-                newUsers.push({
-                    username: chance.word({length: 10}),
-                    password: chance.word({length: 60}),
-                    rating: chance.integer({min: 0, max: 3000})
-                });
-            }
-
-            await User.create(newUsers);
-            const res = await request(app).get('/api/user/rankings');
-
-            expect(res.body.users.length).toBeGreaterThan(0);
-
-            const ratings = res.body.users.map(x => x.rating);
-            const isSortedDesc = ratings.every((_, i, arr) => i == 0 || arr[i-1] >= arr[i]);
-            expect(isSortedDesc).toBeTruthy();
-        });
-
-        test('should return 500 when database is disconnected', async () => {
-            await db.disconnect();
-
-            const res = await request(app).get('/api/user/rankings');
-
-            expect(res.statusCode).toBe(500);
-        });
-    });
-
-    describe('/:username', () => {
+    describe('/:username GET', () => {
         test('should return 200 status if request contains an existing username', async () => {
             const newUser = {
                 username: chance.word({length: 10}),
@@ -644,7 +575,6 @@ describe('/api/user/', () => {
             };
 
             await User.create(newUser);
-            
             await db.disconnect();
 
             const res = await request(app).get(`/api/user/${newUser.username}`);

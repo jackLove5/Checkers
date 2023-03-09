@@ -80,25 +80,6 @@ const authenticateUser = async (req, res) => {
     }
 }
 
-const getRankings = async (req, res) => {
-
-    let users;
-
-    try {
-        users = await User.find({}).sort({'rating' : 'desc'});
-    } catch (err) {
-        res.status(500).send('');
-        return;
-    }
-
-    users = users.map(user => {
-        const {username, rating} = user;
-        return {username, rating};
-    });
-    
-    res.status(200).json({users});
-}
-
 const getUserByUsername = async (req, res) => {
 
     let user;
@@ -116,4 +97,4 @@ const getUserByUsername = async (req, res) => {
     }
 }
 
-module.exports = {createUser, authenticateUser, getRankings, getUserByUsername}
+module.exports = {createUser, authenticateUser, getUserByUsername}
