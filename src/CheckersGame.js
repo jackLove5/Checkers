@@ -6,11 +6,13 @@ export class CheckersGame {
     static PLAYER_WHITE = 'w';
     static PLAYER_BLACK = 'b';
 
+
     constructor() {
         this.players = new Array(CheckersGame.NUM_PLAYERS);
         let board = {};
         let stateStack = [];
         let moveStack = [];
+        let fenStack = [];
         for (let i = 1; i <= 32; i++) {
             if (i < 13) {
                 board["" + i] = new Piece("b");
@@ -21,6 +23,23 @@ export class CheckersGame {
             }
         }
 
+        const getFen = () => {
+            const whitePieces = [];
+            const blackPieces = [];
+            for (let i = 1; i <= 32; i++) {
+                if (board[i]) {
+                    const king = board[i].isKing ? 'K' : '';
+                    if (board[i].color === CheckersGame.PLAYER_WHITE) {
+                        whitePieces.push(king + i);
+                    } else if (board[i]) {
+                        blackPieces.push(king + i);
+                    }
+                }
+            }
+
+            const turn = this.turn === CheckersGame.PLAYER_WHITE ? 'W' : 'B';
+            return `${turn}:W${whitePieces.join(',')}:B${blackPieces.join(',')}`;
+        }
         const getPlayableMovesByPos = (pos) => {
             pos = parseInt(pos);
             const possibleJumps = getPlayableJumpMoves();
@@ -325,6 +344,11 @@ export class CheckersGame {
                 }
             }
 
+            fenStack.push(getFen());
+            if (!this.isDraw() && fenStack.filter(fen => fen === fenStack.at(-1)).length === 3) {
+                this.isDraw = () => true;
+            }
+
             this.turn = this.turn === CheckersGame.PLAYER_BLACK ? CheckersGame.PLAYER_WHITE : CheckersGame.PLAYER_BLACK;
 
         };
@@ -361,5 +385,6 @@ export class CheckersGame {
         this.whitePiecesInStartingPosition = true;
         this.blackPiecesInStartingPosition = true;
         this.turn = CheckersGame.PLAYER_BLACK;
+        this.isDraw = () => false;
     }
 }
