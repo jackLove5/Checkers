@@ -11,8 +11,6 @@ export class CheckersGame {
         this.players = new Array(CheckersGame.NUM_PLAYERS);
         let board = {};
         let stateStack = [];
-        let moveStack = [];
-        let fenStack = [];
         for (let i = 1; i <= 32; i++) {
             if (i < 13) {
                 board["" + i] = new Piece("b");
@@ -287,10 +285,6 @@ export class CheckersGame {
             if (!origin || !dst) {
                 throw "Invalid move. Must specify origin square and destination square";
             }
-/*
-            if (this.getPieceAtPosition(dst) !== null) {
-                throw `Invalid move ${origin}-${dst}. Destination square is not empty. stateStack: ${stateStack} moveStack ${moveStack}`;
-            }*/
 
             if (this.getPieceAtPosition(origin) === null) {
                 throw "Invalid move. Origin square is empty";
@@ -323,8 +317,23 @@ export class CheckersGame {
             }
 
             const foundMove = foundMoves[0];
-            stateStack.push(JSON.stringify(board));
-            moveStack.push(JSON.stringify(foundMove));
+            
+            let lastAdvance = stateStack.length === 0 ? undefined : stateStack.at(-1).lastAdvance;
+            let lastCapture = stateStack.length === 0 ? undefined : stateStack.at(-1).lastCapture;
+            
+            if (foundMove.capturedPieces.length > 0) {
+                lastCapture = stateStack.length;
+            } else if (!board[origin].isKing) {
+                lastAdvance = stateStack.length;
+            }
+            
+            stateStack.push({
+                move: foundMove,
+                fen: getFen(),
+                lastCapture,
+                lastAdvance
+            });
+
             let capturedPieces = foundMove.capturedPieces;
 
             if (dst !== origin) {
@@ -344,14 +353,54 @@ export class CheckersGame {
                 }
             }
 
-            fenStack.push(getFen());
-            if (!this.isDraw() && fenStack.filter(fen => fen === fenStack.at(-1)).length === 3) {
+            this.turn = this.turn === CheckersGame.PLAYER_BLACK ? CheckersGame.PLAYER_WHITE : CheckersGame.PLAYER_BLACK;
+
+            const currentFen = getFen();
+            if (!this.isDraw() && stateStack.filter(s => s.fen === currentFen).length === 2) {
                 this.isDraw = () => true;
             }
 
-            this.turn = this.turn === CheckersGame.PLAYER_BLACK ? CheckersGame.PLAYER_WHITE : CheckersGame.PLAYER_BLACK;
-
+            const movesSinceLastAdvance = Math.floor((stateStack.length - 1 - lastAdvance) / 2);
+            const movesSinceLastCapture = Math.floor((stateStack.length - 1 - lastCapture) / 2);
+            if (!this.isDraw() && movesSinceLastAdvance >= 40 && movesSinceLastCapture >= 40) {
+                this.isDraw = () => true;
+            }
         };
+
+        this.constructFromFen = (fen) => {
+            for (let i = 1; i <= 32; i++) {
+                board[i] = null;
+            }
+
+            let [turn, p1Pieces, p2Pieces] = fen.split(':');
+            turn = turn.toLowerCase();
+            p1Pieces = p1Pieces.split(',');
+            p1Pieces = p1Pieces.map(p => p.toLowerCase()).map((p, i, arr) => i == 0 ? p : arr[0].charAt(0) + p);
+            p2Pieces = p2Pieces.split(',');
+            p2Pieces = p2Pieces.map(p => p.toLowerCase()).map((p, i, arr) => i == 0 ? p : arr[0].charAt(0) + p);
+
+            p1Pieces.concat(p2Pieces).forEach(piece => {
+                const color = piece.charAt(0) == 'b' ? CheckersGame.PLAYER_BLACK : CheckersGame.PLAYER_WHITE;
+                piece = piece.substring(1);
+
+                const isKing = piece.charAt(0) == 'k';
+                if (isKing) {
+                    piece = piece.substring(1);
+                }
+
+
+                const pos = parseInt(piece);
+                if (pos === NaN) {
+                    throw 'Invalid FEN format';
+                }
+
+                board[pos] = new Piece(color);
+                board[pos].isKing = isKing;
+            });
+
+            this.turn = turn == 'b' ? CheckersGame.PLAYER_BLACK : CheckersGame.PLAYER_WHITE;
+
+        }
 
         this.undoLastMove = () => {
 
@@ -359,12 +408,8 @@ export class CheckersGame {
                 throw 'No move to undo';
             }
 
-            const newState = stateStack[stateStack.length - 1];
-            stateStack.pop();
-            moveStack.pop();
-            board = JSON.parse(newState);
-
-            this.turn = this.turn === CheckersGame.PLAYER_BLACK ? CheckersGame.PLAYER_WHITE : CheckersGame.PLAYER_BLACK;
+            const newState = stateStack.pop();
+            this.constructFromFen(newState.fen);
         }
 
         this.getWinner = () => {
@@ -377,14 +422,16 @@ export class CheckersGame {
             }
 
         }
+
+        this.start = () => {
+            this.whitePieceCount = CheckersGame.STARTING_PIECE_COUNT_PER_PLAYER;
+            this.blackPieceCount = CheckersGame.STARTING_PIECE_COUNT_PER_PLAYER;
+            this.whitePiecesInStartingPosition = true;
+            this.blackPiecesInStartingPosition = true;
+            this.turn = CheckersGame.PLAYER_BLACK;
+            this.isDraw = () => false;
+        }
     }
 
-    start() {
-        this.whitePieceCount = CheckersGame.STARTING_PIECE_COUNT_PER_PLAYER;
-        this.blackPieceCount = CheckersGame.STARTING_PIECE_COUNT_PER_PLAYER;
-        this.whitePiecesInStartingPosition = true;
-        this.blackPiecesInStartingPosition = true;
-        this.turn = CheckersGame.PLAYER_BLACK;
-        this.isDraw = () => false;
-    }
+
 }

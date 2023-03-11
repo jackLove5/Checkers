@@ -6,7 +6,7 @@ export class CheckersAi {
         this.maxDepth = 10;
 
         this.maxValue = (state, a, b, depth) => {
-            if (state.getWinner() || depth == this.maxDepth) {
+            if (state.getWinner() || state.isDraw() || depth == this.maxDepth) {
                 return [null, this.getBoardEvaluation(state)];
             }
 
@@ -44,7 +44,7 @@ export class CheckersAi {
 
         this.minValue = (state, a, b, depth) => {
 
-            if (state.getWinner() || depth == this.maxDepth) {
+            if (state.getWinner() || state.isDraw() || depth == this.maxDepth) {
                 return [null, this.getBoardEvaluation(state)];
             }
 
@@ -89,6 +89,10 @@ export class CheckersAi {
             return winner == CheckersGame.PLAYER_BLACK ? Infinity : -Infinity;
         }
 
+        if (state.isDraw()) {
+            return 0;
+        }
+
         let utility = 0;
         for (let i = 1; i <= 32; i++) {
             const piece = state.getPieceAtPosition(i);
@@ -107,12 +111,8 @@ export class CheckersAi {
 
     getNextMove() {
         if (this.game.turn == CheckersGame.PLAYER_BLACK) {
-           // const [move, v] = this.maxValue(this.game, -Infinity, Infinity, 0);
-            //return move;
             return this.maxValue(this.game, -Infinity, Infinity, 0);
         } else {
-            //const [move, v] = this.minValue(this.game, -Infinity, Infinity, 0);
-            //return [move, v;
             return this.minValue(this.game, -Infinity, Infinity, 0);
         }
     }
