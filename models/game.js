@@ -32,6 +32,30 @@ const gameSchema = new mongoose.Schema({
             message: '{{VALUE}} is not supported'
         },
         default: 'initialized'
+    },
+
+    moves: {
+        type: Array
+    },
+
+    result: {
+        type: String,
+        enum: {
+            values: ['b', 'w', 'd'],
+            message: '{{VALUE}} is not supported'
+        }
+    },
+
+    drawOffered: {
+        type: String,
+        enum: {
+            values: ['b', 'w'],
+            message: '{{VALUE}} is not supported'
+        }
+    },
+
+    reason: {
+        type: String, 
     }
 });
 

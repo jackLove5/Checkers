@@ -278,6 +278,14 @@ export class CheckersGame {
 
 
         this.getPlayableMovesByPosition = (pos) => getPlayableMovesByPos(pos);
+        this.getPlayableMoves = () => {
+            let res = [];
+            for (let i = 1; i <= 32; i++) {
+                res = res.concat(getPlayableMovesByPos(i));
+            }
+
+            return res;
+        }
 
         this.getPieceAtPosition = (position) => board[position];
 
@@ -423,6 +431,7 @@ export class CheckersGame {
 
         }
 
+        this.getFen = getFen;
         this.start = () => {
             this.whitePieceCount = CheckersGame.STARTING_PIECE_COUNT_PER_PLAYER;
             this.blackPieceCount = CheckersGame.STARTING_PIECE_COUNT_PER_PLAYER;

@@ -3,7 +3,7 @@ import { CheckersGame} from "./CheckersGame.js";
 export class CheckersAi {
     constructor(game) {
         this.game = game;
-        this.maxDepth = 10;
+        this.maxDepth = 5;
 
         this.maxValue = (state, a, b, depth) => {
             if (state.getWinner() || state.isDraw() || depth == this.maxDepth) {

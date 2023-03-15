@@ -1910,3 +1910,18 @@ test('Game should be draw if no captures have been made in the last 40 moves and
 
     expect(game.isDraw()).toBe(true);
 });
+
+test('Game should have playable moves after starting', () => {
+    const game = new CheckersGame();
+    game.start();
+    const moves = game.getPlayableMoves();
+    expect(moves).toBeTruthy();
+});
+
+test('getFen() should return current state of the board', () => {
+    const game = new CheckersGame();
+    game.start();
+
+    const fen = game.getFen();
+    expect(fen).toBeTruthy();
+})
