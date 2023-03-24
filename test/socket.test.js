@@ -3,13 +3,17 @@
     https://medium.com/@tozwierz/testing-socket-io-with-jest-on-backend-node-js-f71f7ec7010f
 */
 
-const app = require('../app')
+
+const {app, sessionMiddleware} = require('../app')
 const io = require('socket.io-client')
 const setupSocketServer = require('../socket/setup')
 
 const Game = require('../models/game')
 const connectDB = require('../db/connect')
 require('dotenv').config();
+const session = require('express-session');
+const sharedsession = require('express-socket.io-session');
+const http = require('http');
 
 let player1Socket;
 let player2Socket;
@@ -20,10 +24,22 @@ let ioServer;
 let db;
 
 beforeAll((done) => {
-    let {io, server} = setupSocketServer(app);
+    /*const sessionMiddleware = session({
+        secret: process.env.EXPRESS_SESSION_SECRET,
+        resave: true,
+        saveUninitialized: true
+    });*/
+    
+    const server = http.createServer(app);
+    const io = setupSocketServer(server);
+    
+    //app.use(sessionMiddleware);
+    io.use(sharedsession(sessionMiddleware, {autoSave: true}));
+
 
     ioServer = io;
     httpServer = server;
+    server.listen(process.env.PORT);
     httpServerAddr = httpServer.address();
     done();
 })
@@ -42,7 +58,7 @@ beforeEach((done) => {
         player1Socket = io.connect(`http://[${httpServerAddr.address}]:${httpServerAddr.port}`, {
             'reconnection delay': 0,
             'reopen delay': 0,
-            'force new connection': true,
+            'force new connection': false,
             transports: ['websocket'],
             withCredentials: true
         });
@@ -57,7 +73,7 @@ beforeEach((done) => {
         player2Socket = io.connect(`http://[${httpServerAddr.address}]:${httpServerAddr.port}`, {
             'reconnection delay': 0,
             'reopen delay': 0,
-            'force new connection': true,
+            'force new connection': false,
             transports: ['websocket'],
             withCredentials: true
         });
@@ -69,10 +85,10 @@ beforeEach((done) => {
             }
         })
 
-        player3Socket = io.connect(`http://[${httpServerAddr.address}]:${httpServerAddr.port}`, {
+        player3Socket = io.connect(`http://localhost:3000/`, {
             'reconnection delay': 0,
             'reopen delay': 0,
-            'force new connection': true,
+            'force new connection': false,
             transports: ['websocket'],
             withCredentials: true
         });
@@ -220,7 +236,25 @@ describe('joinGame', () => {
 
 
         })
-    })
+    });
+
+    test('should emit badRequest when game is over', (done) => {
+        Game.create({isRanked: false, vsCpu: false}).then(game => {
+            const id = game._id;
+            player1Socket.emit('joinGame', {id});
+            player2Socket.emit('joinGame', {id});
+
+            player1Socket.on('startGame', () => {
+                player1Socket.emit('resign', {id});
+                player1Socket.on('gameOver', () => {
+                    player1Socket.emit('joinGame', {id});
+                    player1Socket.on('badRequest', () => {
+                        done();
+                    })
+                })
+            })
+        })
+    });
 });
 
 describe('startGame', () => {
@@ -314,6 +348,23 @@ describe('makeMove', () => {
                     done();
                 })
             })
+        });
+    });
+
+    test("server should emit badRequest if id is undefined", (done) => {
+        Game.create({isRanked: false, vsCpu: false}).then(game => {
+            const id = game._id;
+            player1Socket.emit('joinGame', {id, color: 'b'});
+            player2Socket.emit('joinGame', {id});
+
+
+            player1Socket.on('startGame', ({moveOptions}) => {
+                const move = moveOptions[0];
+                player1Socket.emit('makeMove', {move});
+                player1Socket.on('badRequest', () => {
+                    done();
+                })
+            });
         });
     });
 
@@ -464,7 +515,7 @@ describe('makeMove', () => {
         });
     })
 
-    test("server should emit gameover when no more moves can be played", (done) => {
+    test.only("server should emit gameover when no more moves can be played", (done) => {
         Game.create({isRanked: false, vsCpu: false}).then(game => {
             const id = game._id;
             player1Socket.emit('joinGame', {id, color: 'b'});
@@ -574,7 +625,61 @@ describe('resign', () => {
                 });
             });
         });
+    });
+
+    test('server should emit badRequest if player resigns when game is already over', (done) => {
+        Game.create({isRanked: false, vsCpu: false}).then(game => {
+            const id = game._id;
+            player1Socket.emit('joinGame', {id});
+            player2Socket.emit('joinGame', {id});
+
+            player1Socket.on('startGame', ({moveOptions}) => {
+                player1Socket.emit('offerDraw', {id});
+                player2Socket.on('offerDraw', () => {
+                    player2Socket.emit('offerDraw', {id});
+                    player1Socket.on('gameOver', () => {
+                        player1Socket.emit('resign', {id});
+                        player1Socket.on('badRequest', () => {
+                            done();
+                        })
+                    });
+                })
+
+            });
+        });
+    });
+
+    test('server should emit badRequest if player resigns before game has started ', (done) => {
+        Game.create({isRanked: false, vsCpu: false}).then(game => {
+            const id = game._id;
+            player1Socket.emit('joinGame', {id});
+            setTimeout(() => {
+                player1Socket.emit('resign', {id});
+            }, 500);
+
+            player1Socket.on('badRequest', () => {
+                Game.findById(id).then(updatedGame => {
+                    expect(updatedGame.gameState).toBe('initialized');
+                    done();
+                });
+            })
+        });
     })
+
+    test('server should emit badRequest if outisde player resigns the game', (done) => {
+        Game.create({isRanked: false, vsCpu: false}).then(game => {
+            const id = game._id;
+            player1Socket.emit('joinGame', {id});
+            player2Socket.emit('joinGame', {id});
+
+            player1Socket.on('startGame', ({moveOptions}) => {
+                player3Socket.emit('resign', {id});
+                player3Socket.on('badRequest', () => {
+                    done();
+                })
+            });
+        });
+    });
 })
 
 describe('gameOver', () => {
@@ -614,7 +719,49 @@ describe('offerDraw', () => {
         });
     });
 
-    test("server should emit gameOver event when both players emit offerDraw event", (done) => {
+    test("server emitted offerDraw event should include color of player who offered draw", (done) => {
+        Game.create({isRanked: false, vsCpu: false}).then(game => {
+            const id = game._id;
+            player1Socket.emit('joinGame', {id, color: 'b'});
+            player2Socket.emit('joinGame', {id});
+
+            player1Socket.on('startGame', ({}) => {
+                player1Socket.emit('offerDraw', {id});
+                player2Socket.on('offerDraw', ({color}) => {
+                    expect(color).toBe('b');
+                    done();
+                })
+            });
+        });
+    });
+
+    test("server should not emit offerDraw if player has already offered draw", (done) => {
+        Game.create({isRanked: false, vsCpu: false}).then(game => {
+            const id = game._id;
+            player1Socket.emit('joinGame', {id, color : 'b'});
+            player2Socket.emit('joinGame', {id});
+
+            let responseCount = 0;
+            player1Socket.on('startGame', ({moveOptions}) => {
+                player1Socket.on('offerDraw', () => {
+                    responseCount++;
+                });
+
+                player1Socket.emit('offerDraw', {id});
+                player1Socket.once('offerDraw', () => {
+                    player1Socket.emit('offerDraw', {id});
+                    player1Socket.emit('makeMove', {move: moveOptions[0], id});
+                    player1Socket.on('move', () => {
+                        expect(responseCount).toBe(1);
+                        done();
+                    })
+
+                })
+            });
+        });
+    });
+
+    test("server should emit gameOver event when both players offer draw", (done) => {
         Game.create({isRanked: false, vsCpu: false}).then(game => {
             const id = game._id;
             player1Socket.emit('joinGame', {id});
@@ -631,5 +778,304 @@ describe('offerDraw', () => {
 
             });
         });
-    })
-})
+    });
+
+    test("server should emit gameOver event when player accepts draw", (done) => {
+        Game.create({isRanked: false, vsCpu: false}).then(game => {
+            const id = game._id;
+            player1Socket.emit('joinGame', {id});
+            player2Socket.emit('joinGame', {id});
+
+            player1Socket.on('startGame', ({}) => {
+                player1Socket.emit('offerDraw', {id});
+                setTimeout(() => {
+                    player2Socket.emit('respondDraw', {id, accept: true});
+                    player2Socket.on('gameOver', () => {
+                        done();
+                    })
+                }, 100);
+
+            });
+        });
+    });
+
+    test("server should emit drawDeclined event to both players when player declines draw offer", (done) => {
+        Game.create({isRanked: false, vsCpu: false}).then(game => {
+            const id = game._id;
+            player1Socket.emit('joinGame', {id});
+            player2Socket.emit('joinGame', {id});
+
+            player1Socket.on('startGame', ({}) => {
+                player1Socket.emit('offerDraw', {id});
+                setTimeout(() => {
+                    player2Socket.emit('respondDraw', {id, accept: false});
+                    let player1Notified = false;
+                    let player2Notified = false;
+                    player1Socket.on('drawDeclined', ({color}) => {
+                        player1Notified = true;
+                        expect(color).toBeTruthy();
+                        if (player2Notified) {
+                            done();
+                        }
+                    })
+
+                    player2Socket.on('drawDeclined', ({color}) => {
+                        player2Notified = true;
+                        expect(color).toBeTruthy();
+                        if (player1Notified) {
+                            done();
+                        }
+                    })
+                }, 100);
+
+            });
+        });
+    });
+
+    test("making a move should withdraw player's own draw offer", (done) => {
+        Game.create({isRanked: false, vsCpu: false}).then(game => {
+            const id = game._id;
+            player1Socket.emit('joinGame', {id, color: 'b'});
+            player2Socket.emit('joinGame', {id});
+
+            let gameOver = false;
+            let drawDeclined = false;
+            player1Socket.on('startGame', ({moveOptions}) => {
+                player1Socket.emit('offerDraw', {id});
+                player1Socket.once('offerDraw', () => {
+                    player1Socket.emit('makeMove', {move: moveOptions[0], id})
+                })
+
+                player2Socket.on('move', () => {
+                    player2Socket.emit('respondDraw', {id, accept: true});
+                })
+
+                player2Socket.on('gameOver', () => {
+                    gameOver = true;
+                });
+
+                player2Socket.on('drawDeclined', ({color}) => {
+                    drawDeclined = true;
+                });
+
+                setTimeout(() => {
+                    expect(gameOver).toBe(false);
+                    expect(drawDeclined).toBe(false);
+                    done();
+                }, 1000);
+
+            });
+        });
+    });
+
+    test("making a move should decline and withdraw other player's draw offer", (done) => {
+        Game.create({isRanked: false, vsCpu: false}).then(game => {
+            const id = game._id;
+            player1Socket.emit('joinGame', {id, color: 'b'});
+            player2Socket.emit('joinGame', {id});
+
+            let gameOver = false;
+            let drawDeclined = false;
+            player1Socket.on('startGame', ({moveOptions, color}) => {
+                player2Socket.emit('offerDraw', {id});
+
+                player1Socket.once('offerDraw', () => {
+                    player1Socket.emit('makeMove', {move: moveOptions[0], id});
+                });
+
+                player1Socket.once('move',() => {
+                    player1Socket.emit('offerDraw', {id});
+                });
+
+                
+                player1Socket.on('gameOver', () => {
+                    gameOver = true;
+                });
+
+                player2Socket.on('drawDeclined', ({color}) => {
+                    expect(color).toBe('b');
+                    expect(gameOver).toBe(false);
+                    done();
+                });
+            });
+        });
+    });
+
+    test('server should emit badRequest if player offers draw when game is already over', (done) => {
+        Game.create({isRanked: false, vsCpu: false}).then(game => {
+            const id = game._id;
+            player1Socket.emit('joinGame', {id});
+            player2Socket.emit('joinGame', {id});
+
+            player1Socket.on('startGame', ({moveOptions}) => {
+                player1Socket.emit('offerDraw', {id});
+                player2Socket.on('offerDraw', () => {
+                    player2Socket.emit('offerDraw', {id});
+                    player1Socket.on('gameOver', () => {
+                        player1Socket.emit('offerDraw', {id});
+                        player1Socket.on('badRequest', () => {
+                            done();
+                        })
+                    });
+                })
+
+            });
+        });
+    });
+
+});
+
+describe('disconnect', () => {
+    test('Game should end in a draw after 10 seconds if both players disconnect', (done) => {
+        Game.create({isRanked: false, vsCpu: false}).then(game => {
+            const id = game._id;
+            player1Socket.emit('joinGame', {id, color: 'b'});
+            player2Socket.emit('joinGame', {id});
+    
+            player1Socket.on('startGame', ({moveOptions}) => {
+                player1Socket.disconnect();
+                player2Socket.disconnect();
+    
+                setTimeout(() => {
+                    Game.findById(id).then(updatedGame => {
+                        expect(updatedGame.result).toBe('d');
+                        done();
+                    })
+                }, 11000);
+            });
+        });
+    }, 15000);
+
+    test('should emit playerDisconnect event when player disconnects', (done) => {
+        const startTime = Date.now();
+        Game.create({isRanked: false, vsCpu: false}).then(game => {
+            let id = game._id;
+            player1Socket.emit('joinGame', {id, color: 'b'});
+            player2Socket.emit('joinGame', {id});
+    
+            player1Socket.on('startGame', ({moveOptions}) => {
+                player2Socket.disconnect();
+
+                player1Socket.on('playerDisconnect', ({disconnectTime}) => {
+                    expect(parseInt(disconnectTime)).toBeGreaterThan(startTime);
+                    expect(parseInt(disconnectTime)).toBeLessThan(Date.now());
+                    done();
+                })
+            });
+        });
+    });
+
+    test('player 2 can claim win 10 seconds after player 1 disconnects', (done) => {
+        Game.create({isRanked: false, vsCpu: false}).then(game => {
+            let id = game._id;
+            player1Socket.emit('joinGame', {id, color: 'b'});
+            player2Socket.emit('joinGame', {id});
+    
+            player1Socket.on('startGame', ({moveOptions}) => {
+                player2Socket.disconnect();
+            });
+
+            player1Socket.on('playerDisconnect', () => {
+                Game.updateOne({_id: id}, {disconnectTime: Date.now() - 10000}).then(game => {
+                    player1Socket.emit('claimWin', {id})
+                })
+            });
+
+            player1Socket.on('gameOver', ({result}) => {
+                expect(result).toBe('b');
+                done();
+            });
+        });
+    });
+
+    test('player 2 can call draw 10 seconds after player 1 disconnects', (done) => {
+        Game.create({isRanked: false, vsCpu: false}).then(game => {
+            let id = game._id;
+            player1Socket.emit('joinGame', {id, color: 'b'});
+            player2Socket.emit('joinGame', {id});
+    
+            player1Socket.on('startGame', ({moveOptions}) => {
+                player2Socket.disconnect();
+            });
+
+            player1Socket.on('playerDisconnect', () => {
+                Game.updateOne({_id: id}, {disconnectTime: Date.now() - 10000}).then(game => {
+                    player1Socket.emit('callDraw', {id})
+                })
+            });
+
+            player1Socket.on('gameOver', ({result}) => {
+                expect(result).toBe('d');
+                done();
+            });
+        });
+    });
+
+    test('server should emit playerReconnect event when player reconnects', (done) => {
+        Game.create({isRanked: false, vsCpu: false}).then(game => {
+            let id = game._id;
+
+            ioServer.once('connect', (socket) => {
+                socket.handshake.session.games = {};
+                socket.handshake.session.games[id] = {color: 'w'}
+            });
+
+            player1Socket.emit('joinGame', {id, color: 'b'});
+            player2Socket.emit('joinGame', {id});
+    
+            player1Socket.on('startGame', ({}) => {
+                player2Socket.disconnect();
+            });
+
+            player1Socket.once('playerDisconnect', () => {
+                player2Socket.connect();
+
+                player2Socket.once('connect', () => {
+                    player2Socket.emit('joinGame', {id});
+                })
+                player2Socket.on('playerReconnect', () => {
+                    done();
+                })
+            });
+            
+        });
+    });
+    test('server should emit badRequest if player claims win after opponent reconnects', (done) => {
+        Game.create({isRanked: false, vsCpu: false}).then(game => {
+            let id = game._id;
+            player1Socket.emit('joinGame', {id, color: 'b'});
+            player2Socket.emit('joinGame', {id});
+    
+            player1Socket.on('startGame', ({}) => {
+                player2Socket.disconnect(true);
+            });
+
+            player1Socket.once('playerDisconnect', () => {
+                Game.updateOne({_id: id}, {disconnectTime: Date.now() - 10000}).then(game => {
+                    ioServer.once('connect', (socket) => {
+                        socket.handshake.session.games = {};
+                        socket.handshake.session.games[id] = {color: 'w'}
+                    });
+
+                    player2Socket.connect();
+
+                    player2Socket.once('connect', () => {
+                      player2Socket.emit('joinGame', {id});
+                    });
+
+                    player2Socket.on('playerReconnect', () => {
+                       player1Socket.emit('claimWin', {id});
+                       player1Socket.on('badRequest', () => {
+                            done();
+                       })
+                    });
+                })
+            });
+
+            player1Socket.on('gameOver', ({result}) => {
+                expect(result).toBe('d');
+                done();
+            });
+        });
+    });
+});

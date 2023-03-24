@@ -1,6 +1,8 @@
-import {Piece } from "./Piece.js";
+const Piece = require('./Piece');
 
-export class CheckersGame {
+//import {Piece } from "./Piece.js";
+
+class CheckersGame {
     static STARTING_PIECE_COUNT_PER_PLAYER = 12;
     static NUM_PLAYERS = 2;
     static PLAYER_WHITE = 'w';
@@ -444,3 +446,5 @@ export class CheckersGame {
 
 
 }
+
+module.exports = CheckersGame;

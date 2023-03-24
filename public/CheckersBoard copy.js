@@ -49,6 +49,10 @@ export class CheckersBoard extends HTMLElement{
         this.drawBoard();
     }
 
+    getEval() {
+        return this.ai.getNextMove();
+    }
+
     doBotMove() {
         const [move, v] = this.ai.getNextMove();
         const [origin, dst] = move.shortNotation.split(/x|-/);
@@ -75,6 +79,8 @@ export class CheckersBoard extends HTMLElement{
         this.drawBoard();
         return v;
     }
+
+    
     drawBoard() {
         for (let i = 1; i <= 32; i++) {
             const squareDiv = this.shadowRoot.querySelector(`[data-pos="${i}"]`);
@@ -97,9 +103,17 @@ export class CheckersBoard extends HTMLElement{
                 const squareDiv = document.createElement("div");
                 if (row % 2 !== col % 2) {
                     squareDiv.setAttribute("data-pos", ++pieceCount);
+                    squareDiv.setAttribute("data-cy", `square-${pieceCount}`)
                     const that = this;
                     squareDiv.onclick = function() { that.clickSquare(squareDiv.getAttribute("data-pos")) }
+                    squareDiv.ondragover = function(e) { e.preventDefault();}
+                    squareDiv.ondrop = function(e) { 
+                        e.preventDefault();
+                        squareDiv.click() }
                     const pieceDiv = document.createElement("div");
+                    pieceDiv.draggable = true;
+                    pieceDiv.ondragstart = function() { squareDiv.click() }
+                    pieceDiv.ondrag = function(e) {e.preventDefault();}
                     squareDiv.appendChild(pieceDiv);
                 }
 
@@ -117,6 +131,7 @@ export class CheckersBoard extends HTMLElement{
         for (let i = 1; i <= 32; i++) {
             const squareDiv = this.shadowRoot.querySelector(`[data-pos="${i}"]`).firstChild;
             squareDiv.classList.remove("highlight");
+            squareDiv.setAttribute('data-cy', squareDiv.getAttribute('data-cy').replace('highlight', ''));
         }
 
         let destinationSquares = [];
@@ -188,7 +203,14 @@ export class CheckersBoard extends HTMLElement{
         destinationSquares.forEach(ds => {
             const squareDiv = this.shadowRoot.querySelector(`[data-pos="${ds}"]`).firstChild;
             squareDiv.classList.add("highlight");
+            squareDiv.setAttribute('data-cy', squareDiv.getAttribute('data-cy') + " highlight");
         });
+    }
+
+    undoLastMove() {
+        this.game.undoLastMove();
+        this.drawBoard();
+
     }
 }
 

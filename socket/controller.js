@@ -1,6 +1,7 @@
-const Game = require('../models/game')
-const {CheckersGame} = require('../src/CheckersGame');
-const {CheckersAi} = require('../src/CheckersAi')
+const mongoose = require('mongoose');
+const Game = mongoose.model('Game');
+const CheckersGame = require('../public/CheckersGame');
+const CheckersAi = require('../public/CheckersAi')
 const Chance = require('chance');
 const chance = new Chance();
 require('dotenv').config();
@@ -41,7 +42,43 @@ const joinGame = (socket, io) => async ({id, color}) => {
         return;
     }
 
-    if (game.vsCpu && playerCount === 1) {
+    if (game.gameState === 'completed') {
+        socket.leave(id);
+        io.to(socket.id).emit('badRequest', {});
+        return;
+    }
+
+    if (game.gameState === 'in_progress') {
+
+        socket.handshake.session.reload(async (err) => {
+
+            if (!socket.handshake.session.games) {
+                return socket.disconnect();
+            }
+
+            if (socket.handshake.session.games[id]) {
+                const color = socket.handshake.session.games[id].color;
+
+                let checkersGame = new CheckersGame();
+                const completedMoves = game.moves || [];
+                checkersGame.start();
+                completedMoves.forEach(moveJSON => {
+                    const move = JSON.parse(moveJSON);
+                    const [src, dst] = move.shortNotation.split(/x|-/);
+                    checkersGame.doMove(src, dst, move.longNotation);
+                })
+
+                io.in(id).emit('playerReconnect', {moveOptions: checkersGame.getPlayableMoves(), fen: checkersGame.getFen(), color})
+
+                if (game.vsCpu && playerCount === 1 || !game.vsCpu && playerCount === 2) {
+                    await Game.updateOne({_id: id}, {disconnectTime: ''});
+                } else {
+                    io.to(socket.id).emit('playerDisconnect', {disconnectTime: game.disconnectTime});
+                }
+            }
+        });
+
+    } else if (game.vsCpu && playerCount === 1) {
         const checkersGame = new CheckersGame();
         checkersGame.start();
         try {
@@ -63,14 +100,14 @@ const joinGame = (socket, io) => async ({id, color}) => {
         const cpuColor = playerColor === 'b' ? 'w' : 'b';
 
         io.to(socket.id).emit('startGame', {moveOptions, color: playerColor});
-        socket.request.session.reload((err) => {
+        socket.handshake.session.reload((err) => {
 
             if (err) {
                 return socket.disconnect();
             }
 
-            socket.request.session.games[id] = {color: playerColor};
-            socket.request.session.save();
+            socket.handshake.session.games[id] = {color: playerColor};
+            socket.handshake.session.save();
         });
         
         if (cpuColor === 'b') {
@@ -86,19 +123,19 @@ const joinGame = (socket, io) => async ({id, color}) => {
             }
         }
     } else if (!game.vsCpu && playerCount === 1) {
-        socket.request.session.reload((err) => {
+        socket.handshake.session.reload((err) => {
 
             if (err) {
                 return socket.disconnect();
             }
             if (color) {
-                socket.request.session.games[id] = {color};
+                socket.handshake.session.games[id] = {color};
 
             } else {
                 color = chance.bool() ? 'b' : 'w';
-                socket.request.session.games[id] = {color};
+                socket.handshake.session.games[id] = {color};
             }
-            socket.request.session.save();
+            socket.handshake.session.save();
         });
     } else if (!game.vsCpu && playerCount === 2) {
 
@@ -115,24 +152,58 @@ const joinGame = (socket, io) => async ({id, color}) => {
         const p1SocketId = Array.from(io.sockets.adapter.rooms.get(id)).find(id => id !== socket.id);
 
         const player1Socket = io.sockets.sockets.get(p1SocketId);
-        player1Socket.request.session.reload((err) => {
+        player1Socket.handshake.session.reload((err) => {
             if (err) {
                 return socket.disconnect();
             }
 
-            const p1Color = player1Socket.request.session.games[id].color;
-            socket.request.session.reload((err) => {
+            const p1Color = player1Socket.handshake.session.games[id].color;
+            socket.handshake.session.reload((err) => {
                 if (err) {
                     return socket.disconnect();
                 }
 
                 const p2Color = p1Color === 'b' ? 'w' : 'b';
-                socket.request.session.games[id] = {color: p2Color};
-                socket.request.session.save();
+                socket.handshake.session.games[id] = {color: p2Color};
+                socket.handshake.session.save();
                 io.to(p1SocketId).emit('startGame', {moveOptions, color: p1Color});
                 io.to(socket.id).emit('startGame', {moveOptions, color: p2Color});
             })
         })
+    }
+}
+
+const disconnecting = (socket, io) => async ({}) => {
+    for (const roomId of socket.rooms) {
+        if (roomId === socket.id) {
+            continue;
+        }
+
+        let game;
+        try {
+            game = await Game.findByIdAndUpdate(roomId, {disconnectTime: String(Date.now())}, {new: true})
+        } catch (err) {
+            return;
+        }
+
+
+        let playerCount = io.sockets.adapter.rooms.get(roomId) ? io.sockets.adapter.rooms.get(roomId).size : 0;
+        if (playerCount === 0) {
+            setTimeout(async () => {
+                playerCount = io.sockets.adapter.rooms.get(roomId) ? io.sockets.adapter.rooms.get(roomId).size : 0;
+                try {
+                    game = await Game.findById(roomId);
+                } catch (err) {
+                    return;
+                }
+
+                if (playerCount === 0 && game.disconnectTime && Date.now() - parseInt(game.disconnectTime) >= 10000) {
+                    await stopGameAndNotify(io, game._id, 'd', 'Both players left');
+                }
+            }, 10000);
+        } else {
+            io.to(roomId).emit('playerDisconnect', {disconnectTime: game.disconnectTime});
+        }
     }
 }
 
@@ -152,10 +223,9 @@ const executeMoveAndNotify = async (io, move, game, gameId) => {
 }
 
 const stopGameAndNotify = async (io, gameId, result, reason) => {
-
     try {
         await Game.updateOne({_id: gameId}, {result, reason, gameState: 'completed'});
-        io.to(gameId).emit('gameOver', {gameId});
+        io.in(gameId).emit('gameOver', {gameId, result, reason});
     } catch (err) {
         throw err;
     }
@@ -169,6 +239,11 @@ const makeMove = (socket, io) => async ({move, id}) => {
         return;
     }
 
+    if (!gameRecord) {
+        io.to(socket.id).emit('badRequest', {});
+        return;
+    }
+
     let game = new CheckersGame();
     game.start();
     gameRecord.moves.forEach(moveJSON => {
@@ -177,15 +252,25 @@ const makeMove = (socket, io) => async ({move, id}) => {
         game.doMove(src, dst, move.longNotation);
     })
 
-    socket.request.session.reload(async (err) => {
+    socket.handshake.session.reload(async (err) => {
         if (err) {
             return socket.disconnect();
         }
 
-        if (game.turn !== socket.request.session.games[id].color) {
+        const color = socket.handshake.session.games[id].color;
+        if (!socket.handshake.session.games[id] || game.turn !== color) {
             io.to(socket.id).emit('badRequest', () => {});
             return;
         }
+
+        if (gameRecord.drawOffered) {
+            const drawOffered = gameRecord.drawOffered;
+            await Game.updateOne({_id: id}, {drawOffered: ''});
+            if (drawOffered !== game.turn) {
+                io.to(id).emit('drawDeclined', {id, color});
+            }
+        }
+
 
         try {
             await executeMoveAndNotify(io, move, game, id);
@@ -236,15 +321,34 @@ const makeMove = (socket, io) => async ({move, id}) => {
 };
 
 const resign = (socket, io) =>  async ({id}) => {
-    socket.request.session.reload(async (err) => {
+    socket.handshake.session.reload(async (err) => {
         if (err) {
             return socket.disconnect();
         }
 
-        const color = socket.request.session.games[id].color;
+        if (!socket.handshake.session.games || !socket.handshake.session.games[id]) {
+            socket.emit('badRequest', {});
+            return;
+        }
+
+        const color = socket.handshake.session.games[id].color;
+
         const result = color === 'b' ? 'w' : 'b';
         
-        const reason = `${color === 'b' ? 'Black' : 'White'} resigns`;
+        const reason = `${color === 'b' ? 'Black' : 'White'} resigned`;
+
+        let game;
+        try {
+            game = await Game.findById(id);
+        } catch (err) {
+            io.to(id).emit('serverError', {});
+        }
+
+        if (!game || game.gameState !== 'in_progress') {
+            socket.emit('badRequest', {});
+            return;
+        }
+
         try {
             await stopGameAndNotify(io, id, result, reason);
         } catch (err) {
@@ -255,21 +359,26 @@ const resign = (socket, io) =>  async ({id}) => {
 };
 
 const offerDraw = (socket, io) =>  async ({id}) => {
-    socket.request.session.reload(async (err) => {
+    socket.handshake.session.reload(async (err) => {
         if (err) {
             return socket.disconnect();
         }
 
-        const color = socket.request.session.games[id].color;
+        const color = socket.handshake.session.games[id].color;
         const game = await Game.findById(id);
-        if (game.drawOffered && game.drawOffered !== color) {
 
+        if (game.gameState !== 'in_progress') {
+            io.to(socket.id).emit('badRequest', {});
+            return;
+        }
+
+        if (game.drawOffered && game.drawOffered !== color) {
             try {
-                await stopGameAndNotify(io, id, 'd', 'Draw by mutual agreement');
+                await stopGameAndNotify(io, id, 'd', 'Mutual agreement');
             } catch (err) {
                 io.to(id).emit('serverError', {});
             }
-        } else {
+        } else if (!game.drawOffered)  {
             await Game.updateOne({_id: id}, {drawOffered: color});
             io.to(id).emit('offerDraw', {id, color});
         }
@@ -277,5 +386,61 @@ const offerDraw = (socket, io) =>  async ({id}) => {
     })
 };
 
+const respondDraw = (socket, io) =>  async ({id, accept}) => {
+    socket.handshake.session.reload(async (err) => {
+        if (err) {
+            return socket.disconnect();
+        }
 
-module.exports = {joinGame, makeMove, resign, offerDraw};
+        const color = socket.handshake.session.games[id].color;
+        const game = await Game.findById(id);
+        if (game.drawOffered && game.drawOffered !== color && accept) {
+
+            try {
+                await stopGameAndNotify(io, id, 'd', 'Mutual agreement');
+            } catch (err) {
+                io.to(id).emit('serverError', {});
+            }
+        } else if (game.drawOffered && game.drawOffered !== color) {
+            await Game.updateOne({_id: id}, {drawOffered: ''});
+            io.to(id).emit('drawDeclined', {id, color});
+        }
+
+    })
+};
+
+const claimWin = (socket, io) => async ({id}) => {
+    socket.handshake.session.reload(async (err) => {
+        if (err) {
+            return socket.disconnect();
+        }
+
+        const color = socket.handshake.session.games[id].color;
+
+        const game = await Game.findById(id);
+
+        if (game && game.disconnectTime && Date.now() - parseInt(game.disconnectTime) >= 10000) {
+            await stopGameAndNotify(io, id, color, 'Claimed win');
+        } else {
+            io.to(id).emit('badRequest', {});
+        }
+    })
+}
+
+const callDraw = (socket, io) => async ({id}) => {
+    socket.handshake.session.reload(async (err) => {
+        if (err) {
+            return socket.disconnect();
+        }
+
+        const game = await Game.findById(id);
+
+        if (game && game.disconnectTime && Date.now() - parseInt(game.disconnectTime) >= 10000) {
+            await stopGameAndNotify(io, id, 'd', 'Called draw');
+        } else {
+            io.to(id).emit('badRequest', {});
+        }
+    })
+}
+
+module.exports = {joinGame, makeMove, resign, offerDraw, respondDraw, disconnecting, claimWin, callDraw};

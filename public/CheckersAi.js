@@ -1,9 +1,9 @@
-import { CheckersGame} from "./CheckersGame.js";
+const CheckersGame = require("./CheckersGame")
 
-export class CheckersAi {
+class CheckersAi {
     constructor(game) {
         this.game = game;
-        this.maxDepth = 5;
+        this.maxDepth = 8;
 
         this.maxValue = (state, a, b, depth) => {
             if (state.getWinner() || state.isDraw() || depth == this.maxDepth) {
@@ -101,7 +101,6 @@ export class CheckersAi {
                 if (piece.isKing) {
                     pieceVal *= 2;
                 }
-    
                 utility += pieceVal;
             }
         }
@@ -117,3 +116,5 @@ export class CheckersAi {
         }
     }
 }
+
+module.exports = CheckersAi;

@@ -1,6 +1,7 @@
-import { Piece }  from "../src/Piece.js";
-import { CheckersGame }  from "../src/CheckersGame.js";
-import { CheckersAi } from "../src/CheckersAi.js";
+const Piece = require('../public/Piece');
+const CheckersGame = require('../public/CheckersGame.js');
+const CheckersAi = require('../public/CheckersAi');
+
 
 test('Should be able to create a Checkers game', () => {
     const game = new CheckersGame();

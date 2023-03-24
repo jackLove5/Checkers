@@ -56,7 +56,12 @@ const gameSchema = new mongoose.Schema({
 
     reason: {
         type: String, 
+    },
+
+    disconnectTime: {
+        type: String
     }
 });
 
-module.exports = mongoose.model('Game', gameSchema);
+let Game = mongoose.model('Game', gameSchema);
+module.exports = Game;

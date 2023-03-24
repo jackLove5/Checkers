@@ -1,0 +1,50 @@
+div {
+    display: inline-block;
+}
+#content {
+    display: flex;
+}
+
+#board {
+    flex: 2;
+}
+
+#moves {
+    flex: 1;
+}
+
+#move-list {
+    display: grid;
+    grid-template-columns: auto auto auto;
+}
+
+#winner{
+    height:100px;
+    width: 100px;
+    font-size: 10rem;
+}
+
+#moves{
+    height: 100px;
+    width: 100px;
+}
+
+.selected-move {
+    border: 1px solid cyan;
+}
+
+#info-box {
+    height: 400px;
+}
+
+#message {
+    height: 90%;
+}
+
+#draw-buttons{
+    display: block;
+}
+
+#buttons {
+    display: block;
+}
