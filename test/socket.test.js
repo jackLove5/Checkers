@@ -9,6 +9,7 @@ const io = require('socket.io-client')
 const setupSocketServer = require('../socket/setup')
 
 const Game = require('../models/game')
+const Challenge = require('../models/challenge')
 const connectDB = require('../db/connect')
 require('dotenv').config();
 const session = require('express-session');
@@ -58,7 +59,7 @@ beforeEach((done) => {
         player1Socket = io.connect(`http://[${httpServerAddr.address}]:${httpServerAddr.port}`, {
             'reconnection delay': 0,
             'reopen delay': 0,
-            'force new connection': false,
+            'force new connection': true,
             transports: ['websocket'],
             withCredentials: true
         });
@@ -73,7 +74,7 @@ beforeEach((done) => {
         player2Socket = io.connect(`http://[${httpServerAddr.address}]:${httpServerAddr.port}`, {
             'reconnection delay': 0,
             'reopen delay': 0,
-            'force new connection': false,
+            'force new connection': true,
             transports: ['websocket'],
             withCredentials: true
         });
@@ -85,10 +86,11 @@ beforeEach((done) => {
             }
         })
 
-        player3Socket = io.connect(`http://localhost:3000/`, {
+
+        player3Socket = io.connect(`http://[${httpServerAddr.address}]:${httpServerAddr.port}`, {
             'reconnection delay': 0,
             'reopen delay': 0,
-            'force new connection': false,
+            'force new connection': true,
             transports: ['websocket'],
             withCredentials: true
         });
@@ -515,7 +517,7 @@ describe('makeMove', () => {
         });
     })
 
-    test.only("server should emit gameover when no more moves can be played", (done) => {
+    test("server should emit gameover when no more moves can be played", (done) => {
         Game.create({isRanked: false, vsCpu: false}).then(game => {
             const id = game._id;
             player1Socket.emit('joinGame', {id, color: 'b'});
@@ -1075,6 +1077,316 @@ describe('disconnect', () => {
             player1Socket.on('gameOver', ({result}) => {
                 expect(result).toBe('d');
                 done();
+            });
+        });
+    });
+});
+
+describe('createChallenge', () => {
+    it('should emit badRequest if user is not logged in', (done) => {
+        player1Socket.emit('createChallenge', {receiverName: 'player2Name', isRanked: false, color : 'b'});
+        player1Socket.on('badRequest', () => {
+            done();
+        })
+
+    });
+
+    it('should emit badRequest if opponent is not logged in', (done) => {
+        player1Socket.disconnect();
+        ioServer.once('connect', (socket) => {
+            socket.handshake.session.username = 'player1Name';
+        });
+
+        player1Socket.connect();
+
+        player1Socket.emit('createChallenge', {receiverName: 'player2Name', isRanked: false, color : 'b'});
+        player1Socket.on('badRequest', () => {
+            done();
+        });
+
+    });
+
+    it('should emit challengeRequest to opponent socket', (done) => {
+        player1Socket.disconnect();
+        ioServer.once('connect', (socket) => {
+            socket.handshake.session.username = 'player1Name';
+
+            player2Socket.disconnect();
+            ioServer.once('connect', (socket) => {
+                socket.handshake.session.username = 'player2Name'
+                socket.join('player2Name');
+                player1Socket.emit('createChallenge', {receiverName: 'player2Name', isRanked: false, color : 'b'});
+            });
+            player2Socket.connect();
+        });
+
+        player1Socket.connect();
+
+
+        player2Socket.on('challengeRequest', ({challenge}) => {
+            expect(challenge).toBeTruthy();
+            expect(challenge.senderName).toBe('player1Name');
+            expect(challenge.receiverName).toBe('player2Name');
+            expect(challenge.isRanked).toBeFalsy;
+            expect(challenge.playerBlack).toBe('player1Name');
+            expect(challenge.playerWhite).toBe('player2Name');
+            expect(challenge._id).toBeTruthy();
+            done();
+        });
+    });
+
+    it('should emit server error when db connection is unavailable', (done) => {
+
+        player1Socket.disconnect();
+        ioServer.once('connect', (socket) => {
+            socket.handshake.session.username = 'player1Name';
+
+            player2Socket.disconnect();
+            ioServer.once('connect', (socket) => {
+                socket.handshake.session.username = 'player2Name'
+                socket.join('player2Name');
+                db.disconnect();
+                player1Socket.emit('createChallenge', {receiverName: 'player2Name', isRanked: false, color : 'b'});
+            });
+            player2Socket.connect();
+        });
+
+        player1Socket.connect();
+
+
+
+        player1Socket.on('serverError', () => {
+            done();
+        })
+    });
+});
+
+describe('respondToChallenge', () => {
+    it('should emit badRequest if user is not logged in', (done) => {
+        player1Socket.disconnect();
+        ioServer.once('connect', (socket) => {
+            socket.handshake.session.username = 'player1Name';
+
+            player2Socket.disconnect();
+            ioServer.once('connect', (socket) => {
+                socket.handshake.session.username = 'player2Name'
+                socket.join('player2Name');
+                player1Socket.emit('createChallenge', {receiverName: 'player2Name', isRanked: false, color : 'b'});
+            });
+            player2Socket.connect();
+        });
+
+        player1Socket.connect();
+
+        player2Socket.on('challengeRequest', ({challenge}) => {
+            player2Socket.disconnect();
+            player2Socket.connect();
+            ioServer.once('connect', (socket) => {
+                player2Socket.emit('respondToChallenge', ({challengeId: challenge._id, accept: true}));
+                player2Socket.on('badRequest', () => {
+                    done();
+                });
+            })
+        });
+    });
+
+    it("should emit badRequest if responder is not the requested opponent", (done) => {
+        player1Socket.disconnect();
+        ioServer.once('connect', (socket) => {
+            socket.handshake.session.username = 'player1Name';
+
+            player2Socket.disconnect();
+            ioServer.once('connect', (socket) => {
+                socket.handshake.session.username = 'player2Name'
+                socket.join('player2Name');
+                player3Socket.disconnect();
+                ioServer.once('connect', (socket => {
+                    socket.handshake.session.username = 'player3Name'
+                    player1Socket.emit('createChallenge', {receiverName: 'player2Name', isRanked: false, color : 'b'});
+                }))
+                player3Socket.connect();
+            });
+            player2Socket.connect();
+        });
+
+        player1Socket.connect();
+
+        player2Socket.on('challengeRequest', ({challenge}) => {
+            player3Socket.emit('respondToChallenge', ({challengeId: challenge._id, accept: true}));
+            player3Socket.on('badRequest', () => {
+                done();
+            })
+        });
+    });
+
+    it('should emit badRequest if challengeId is invalid', (done) => {
+        player1Socket.disconnect();
+        ioServer.once('connect', (socket) => {
+            socket.handshake.session.username = 'player1Name';
+
+            player2Socket.disconnect();
+            ioServer.once('connect', (socket) => {
+                socket.handshake.session.username = 'player2Name'
+                socket.join('player2Name');
+                player1Socket.emit('createChallenge', {receiverName: 'player2Name', isRanked: false, color : 'b'});
+            });
+            player2Socket.connect();
+        });
+
+        player1Socket.connect();
+
+        player2Socket.on('challengeRequest', ({challenge}) => {
+            player2Socket.emit('respondToChallenge', ({challengeId: 'abc', accept: true}));
+            player2Socket.on('badRequest', () => {
+                done();
+            });
+        });
+    });
+
+    it('If accepted, server should emit challengeStart event to both players', (done) => {
+        player1Socket.disconnect();
+        ioServer.once('connect', (socket) => {
+            socket.handshake.session.username = 'player1Name';
+            socket.join('player1Name');
+            player2Socket.disconnect();
+            ioServer.once('connect', (socket) => {
+                socket.handshake.session.username = 'player2Name'
+                socket.join('player2Name');
+                player1Socket.emit('createChallenge', {receiverName: 'player2Name', isRanked: false, color : 'b'});
+            });
+            player2Socket.connect();
+        });
+
+        player1Socket.connect();
+
+        player2Socket.on('challengeRequest', ({challenge}) => {
+            player2Socket.emit('respondToChallenge', ({challengeId: challenge._id, accept: true}));
+            let player1Notified = false;
+            let player2Notified = false;
+            player2Socket.on('challengeStart', ({gameId}) => {
+                player2Notified = true;
+                expect(gameId).toBeTruthy();
+                if (player1Notified) {
+                    done();
+                }
+            });
+
+            player1Socket.on('challengeStart', ({gameId}) => {
+                player1Notified = true;
+                expect(gameId).toBeTruthy();
+                if (player2Notified) {
+                    done();
+                }
+            })
+        });
+
+    });
+
+    it('If accepted, challenge should be marked accepted in db', (done) => {
+        player1Socket.disconnect();
+        ioServer.once('connect', (socket) => {
+            socket.handshake.session.username = 'player1Name';
+
+            player2Socket.disconnect();
+            ioServer.once('connect', (socket) => {
+                socket.handshake.session.username = 'player2Name'
+                socket.join('player2Name');
+                player1Socket.emit('createChallenge', {receiverName: 'player2Name', isRanked: false, color : 'b'});
+            });
+            player2Socket.connect();
+        });
+
+        player1Socket.connect();
+
+        player2Socket.on('challengeRequest', ({challenge}) => {
+            player2Socket.emit('respondToChallenge', ({challengeId: challenge._id, accept: true}));
+            player2Socket.on('challengeStart', ({gameId}) => {
+                Challenge.findById(challenge._id).then(updated => {
+                    expect(updated.status).toBe('accepted');
+                    done();
+                })
+            });
+        });
+
+    });
+
+
+    it('If rejected, server should emit challengeRejected event to sender', (done) => {
+        player1Socket.disconnect();
+        ioServer.once('connect', (socket) => {
+            socket.handshake.session.username = 'player1Name';
+
+            player2Socket.disconnect();
+            ioServer.once('connect', (socket) => {
+                socket.handshake.session.username = 'player2Name'
+                socket.join('player2Name');
+                player1Socket.emit('createChallenge', {receiverName: 'player2Name', isRanked: false, color : 'b'});
+            });
+            player2Socket.connect();
+        });
+
+        player1Socket.connect();
+
+        player2Socket.on('challengeRequest', ({challenge}) => {
+            player2Socket.emit('respondToChallenge', ({challengeId: challenge._id, accept: false}));
+            player1Socket.on('challengeRejected', () => {
+                done();
+            });
+        });
+
+    });
+
+    it('If rejected, challenge should be marked rejected in db', (done) => {
+        player1Socket.disconnect();
+        ioServer.once('connect', (socket) => {
+            socket.handshake.session.username = 'player1Name';
+
+            player2Socket.disconnect();
+            ioServer.once('connect', (socket) => {
+                socket.handshake.session.username = 'player2Name'
+                socket.join('player2Name');
+                player1Socket.emit('createChallenge', {receiverName: 'player2Name', isRanked: false, color : 'b'});
+            });
+            player2Socket.connect();
+        });
+
+        player1Socket.connect();
+
+        player2Socket.on('challengeRequest', ({challenge}) => {
+            player2Socket.emit('respondToChallenge', ({challengeId: challenge._id, accept: false}));
+            player1Socket.on('challengeRejected', () => {
+                Challenge.findById(challenge._id).then(challengeEntry => {
+                    expect(challengeEntry.status).toBe('rejected');
+                    done();
+                });
+            });
+        });
+
+    });
+
+    it('should emit badRequest if challenge is not pending', (done) => {
+        player1Socket.disconnect();
+        ioServer.once('connect', (socket) => {
+            socket.handshake.session.username = 'player1Name';
+
+            player2Socket.disconnect();
+            ioServer.once('connect', (socket) => {
+                socket.handshake.session.username = 'player2Name'
+                socket.join('player2Name');
+                player1Socket.emit('createChallenge', {receiverName: 'player2Name', isRanked: false, color : 'b'});
+            });
+            player2Socket.connect();
+        });
+
+        player1Socket.connect();
+
+        player2Socket.on('challengeRequest', ({challenge}) => {
+            player2Socket.emit('respondToChallenge', ({challengeId: challenge._id, accept: true}));
+            player1Socket.on('challengeStart', () => {
+                player2Socket.emit('respondToChallenge', ({challengeId: challenge._id, accept: true}));
+                player2Socket.on('badRequest', () => {
+                    done();
+                })
             });
         });
     });

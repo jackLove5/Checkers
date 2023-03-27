@@ -72,6 +72,8 @@ const authenticateUser = async (req, res) => {
         const match = await bcrypt.compare(req.body.password.normalize(), user.password);
         if (match) {
             res.status(200).send('');
+            req.session.username = user.username;
+            req.session.save();
         } else {
             res.status(401).send('');
         }
@@ -91,7 +93,7 @@ const getUserByUsername = async (req, res) => {
     }
 
     if (user) {
-        res.status(200).send('');
+        res.status(200).json({username: user.username, rating: user.rating});
     } else {
         res.status(404).send('');
     }

@@ -2,7 +2,7 @@
 const CheckersBoard = require('./VersusBoard')
 const {io} = require('./socket-io.js');
 let socket = io.connect("/", {
-    withCredentials: false
+    withCredentials: true
 });
 
 

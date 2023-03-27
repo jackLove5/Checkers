@@ -1,12 +1,17 @@
-const {joinGame, makeMove, resign, offerDraw, respondDraw, disconnecting, claimWin, callDraw} = require('./controller');
+const {joinGame, makeMove, resign, offerDraw, respondDraw, disconnecting, claimWin, callDraw, createChallenge, respondToChallenge} = require('./controller');
 
 const setupSocketServer = (server) => {
     const io = require('socket.io')(server);
+
 
     io.on('connection', async (socket) => {
         if (!socket.handshake.session.games) {
             socket.handshake.session.games = {};
             socket.handshake.session.save();
+        }
+
+        if (socket.handshake.session && socket.handshake.session.username) {
+            socket.join(socket.handshake.session.username);
         }
 
         socket.on('joinGame', joinGame(socket, io));
@@ -17,7 +22,12 @@ const setupSocketServer = (server) => {
         socket.on('disconnecting', disconnecting(socket, io));
         socket.on('claimWin', claimWin(socket, io));
         socket.on('callDraw', callDraw(socket, io));
+
+        socket.on('createChallenge', createChallenge(socket, io));
+        socket.on('respondToChallenge', respondToChallenge(socket, io));
     });
+
+
 
     server.on('listening', () => {
         let httpServer = server;

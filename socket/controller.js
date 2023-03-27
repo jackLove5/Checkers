@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const Game = mongoose.model('Game');
+const Challenge = mongoose.model('Challenge');
 const CheckersGame = require('../public/CheckersGame');
 const CheckersAi = require('../public/CheckersAi')
 const Chance = require('chance');
@@ -123,18 +124,29 @@ const joinGame = (socket, io) => async ({id, color}) => {
             }
         }
     } else if (!game.vsCpu && playerCount === 1) {
-        socket.handshake.session.reload((err) => {
+        socket.handshake.session.reload(async (err) => {
 
             if (err) {
                 return socket.disconnect();
             }
-            if (color) {
-                socket.handshake.session.games[id] = {color};
 
+            const username = socket.handshake.session.username;
+            if (username) {
+                if (game.playerBlack === username || game.playerWhite === username) {
+                    color = game.playerBlack === username ? 'b' : 'w';
+                } else {
+                    color = chance.bool() ? 'b' : 'w';
+                    if (color === 'b') {
+                        await Game.updateOne({id: _id}, {playerBlack: username});
+                    } else {
+                        await Game.updateOne({id: _id}, {playerWhite: username});
+                    }
+                }
             } else {
                 color = chance.bool() ? 'b' : 'w';
-                socket.handshake.session.games[id] = {color};
             }
+
+            socket.handshake.session.games[id] = {color};
             socket.handshake.session.save();
         });
     } else if (!game.vsCpu && playerCount === 2) {
@@ -158,12 +170,21 @@ const joinGame = (socket, io) => async ({id, color}) => {
             }
 
             const p1Color = player1Socket.handshake.session.games[id].color;
-            socket.handshake.session.reload((err) => {
+            socket.handshake.session.reload(async (err) => {
                 if (err) {
                     return socket.disconnect();
                 }
 
+                const p2Username = socket.handshake.session.username;
                 const p2Color = p1Color === 'b' ? 'w' : 'b';
+                if (p2Username) {
+                    if (p2Color === 'b') {
+                        await Game.updateOne({_id: id}, {playerBlack: p2Username});
+                    } else {
+                        await Game.updateOne({_id: id}, {playerWhite: p2Username});
+                    }
+                }
+
                 socket.handshake.session.games[id] = {color: p2Color};
                 socket.handshake.session.save();
                 io.to(p1SocketId).emit('startGame', {moveOptions, color: p1Color});
@@ -443,4 +464,108 @@ const callDraw = (socket, io) => async ({id}) => {
     })
 }
 
-module.exports = {joinGame, makeMove, resign, offerDraw, respondDraw, disconnecting, claimWin, callDraw};
+const createChallenge = (socket, io) => async ({receiverName, isRanked, color}) => {
+    if (!socket.handshake.session || !socket.handshake.session.username) {
+        socket.emit('badRequest', {});
+        return;
+    }
+
+    const senderName = socket.handshake.session.username;
+    const rooms = io.sockets.adapter.rooms;
+
+    if (!rooms.get(receiverName) || rooms.get(receiverName).size == 0) {
+        socket.emit('badRequest', {});
+        return;
+    }
+
+
+    let senderColor;
+    if (color === 'b' || color === 'w') {
+        senderColor = color;
+    } else {
+        senderColor = chance.bool() ? 'b' : 'w';
+    }
+
+    let newChallenge;
+    try {
+        newChallenge = await Challenge.create({
+            senderName,
+            receiverName,
+            playerBlack: senderColor === 'b' ? senderName : receiverName,
+            playerWhite: senderColor === 'w' ? senderName : receiverName,
+            isRanked
+        });
+    } catch (err) {
+        if (err.name == 'CastError') {
+            socket.emit('badRequest');
+        } else {
+            socket.emit('serverError');
+        }
+
+        return;
+    }
+
+
+
+    socket.join(`${newChallenge._id}`);
+
+
+    io.to(receiverName).emit('challengeRequest', {challenge: newChallenge});
+
+};
+
+const respondToChallenge = (socket, io) => async ({challengeId, accept}) => {
+
+    const rooms = io.sockets.adapter.rooms;
+
+
+    if (!socket.handshake.session || !socket.handshake.session.username) {
+        socket.emit('badRequest', {});
+        return;
+    }
+
+    const username = socket.handshake.session.username;
+
+    let challenge;
+    try {
+        challenge = await Challenge.findById(challengeId);
+    } catch (err) {
+        socket.emit('badRequest', {});
+        return;
+    }
+
+
+    if (challenge.receiverName !== username) {
+        socket.emit('badRequest', {});
+        return;
+    }
+
+    if (challenge.status !== 'pending') {
+        socket.emit('badRequest', {});
+        return;
+    }
+
+    if (accept) {
+        let newGame;
+        try {
+            newGame = await Game.create({
+                isRanked: challenge.isRanked,
+                vsCpu: false,
+                playerBlack: challenge.playerBlack,
+                playerWhite: challenge.playerWhite,
+            });
+        } catch (err) {
+            return;
+        }
+
+        await Challenge.updateOne({_id: challenge._id}, {status: 'accepted'});
+        socket.join(`${challengeId}`);
+
+        io.to(`${challengeId}`).emit('challengeStart', {gameId: newGame._id});
+    } else {
+        await Challenge.updateOne({_id: challenge._id}, {status: 'rejected'});
+        io.to(`${challenge._id}`).emit('challengeRejected', {});
+    }
+}
+
+module.exports = {joinGame, makeMove, resign, offerDraw, respondDraw, disconnecting, claimWin, callDraw, createChallenge, respondToChallenge};

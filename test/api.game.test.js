@@ -84,7 +84,7 @@ describe('/api/game/', () => {
             const game = await Game.create({
                 isRanked: false,
                 vsCpu: false,
-                player1Name: 'user'
+                playerBlack: 'user'
             });
     
             const res = await request(app).get(`/api/game/${game._id}`);
@@ -131,16 +131,16 @@ describe('/api/game/', () => {
             await Game.create({
                 isRanked: false,
                 vsCpu: false,
-                player1Name: 'user'
+                playerBlack: 'user'
             },{
                 isRanked: false,
                 vsCpu: false,
-                player1Name: 'guest',
-                player2Name: 'user'
+                playerBlack: 'guest',
+                playerWhite: 'user'
             });
 
-            const found1 = await Game.find({player1Name: 'user'});
-            const found2 = await Game.find({player2Name: 'user'});
+            const found1 = await Game.find({playerBlack: 'user'});
+            const found2 = await Game.find({playerWhite: 'user'});
     
             const res = await request(app).get('/api/game?u=user');
     

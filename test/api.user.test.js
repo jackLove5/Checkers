@@ -1,4 +1,4 @@
-const app = require('../app');
+const {app, sessionMiddleware} = require('../app');
 const request = require('supertest');
 
 const connectDB = require('../db/connect')
@@ -553,6 +553,35 @@ describe('/api/user/', () => {
             const res = await request(app).get(`/api/user/${newUser.username}`);
 
             expect(res.statusCode).toBe(200);
+        });
+
+        test('body should contain username and rating contains an existing username', async () => {
+            const newUser = {
+                username: chance.word({length: 10}),
+                password: chance.word({length: 60}),
+            };
+
+            await User.create(newUser);
+
+            const res = await request(app).get(`/api/user/${newUser.username}`);
+
+            expect(res.statusCode).toBe(200);
+            expect(res.body.username).toBeTruthy();
+            expect(res.body.rating).toBeTruthy();
+        });
+
+        test('body should not contain password', async () => {
+            const newUser = {
+                username: chance.word({length: 10}),
+                password: chance.word({length: 60}),
+            };
+
+            await User.create(newUser);
+
+            const res = await request(app).get(`/api/user/${newUser.username}`);
+
+            expect(res.statusCode).toBe(200);
+            expect(res.body.password).toBeFalsy();
         });
 
         test('should return 404 status if requested username does not exist', async () => {

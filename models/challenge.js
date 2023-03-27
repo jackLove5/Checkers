@@ -1,9 +1,29 @@
 const mongoose = require('mongoose')
 
 const challengeSchema = new mongoose.Schema({
-    opponentUsername: {
+    senderName: {
         type: String,
-        required: [true, 'must provide opponent username']
+        required: [true, 'must provide senderName']
+    },
+
+    receiverName: {
+        type: String,
+        required: [true, 'must provide receiverName']
+    },
+
+    playerBlack: {
+        type: String,
+        required: [true, 'must provide playerBlack']
+    },
+
+    playerWhite: {
+        type: String,
+        required: [true, 'must provide playerWhite']
+    },
+
+    isRanked: {
+        type: Boolean,
+        required: [true, 'must provide isRanked']
     },
 
     status: {

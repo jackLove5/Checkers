@@ -11,18 +11,18 @@ const gameSchema = new mongoose.Schema({
         require: [true, 'must provide vsCpu (true/false)']
     },
 
-    player1Name: {
+    playerBlack: {
         type: String,
         default: "Guest",
-        minLength: [3, 'player1Name length must be at least 3 characters'],
-        maxLength: [30, 'playerName length must not exceed 30 characters'],
+        minLength: [3, 'playerBlack length must be at least 3 characters'],
+        maxLength: [30, 'playerBlack length must not exceed 30 characters'],
     },
 
-    player2Name: {
+    playerWhite: {
         type: String,
         default: "Guest",
-        minLength: [3, 'player2Name length must be at least 3 characters'],
-        maxLength: [30, 'player2Name length must not exceed 30 characters'],
+        minLength: [3, 'playerWhite length must be at least 3 characters'],
+        maxLength: [30, 'playerWhite length must not exceed 30 characters'],
     },
 
     gameState: {

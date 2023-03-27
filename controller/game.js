@@ -68,8 +68,8 @@ const getGamesByUsername = async (req, res) => {
     const username = req.query.u;
     let list1, list2;
     try {
-        list1 = await Game.find({player1Name: username});
-        list2 = await Game.find({player2Name: username});
+        list1 = await Game.find({playerBlack: username});
+        list2 = await Game.find({playerWhite: username});
     } catch (error) {
         res.status(500).send('');
         return;
