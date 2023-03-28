@@ -465,13 +465,11 @@ const callDraw = (socket, io) => async ({id}) => {
 }
 
 const createChallenge = (socket, io) => async ({receiverName, isRanked, color}) => {
-    console.log('in createChallegne')
     if (!socket.handshake.session || !socket.handshake.session.username) {
         socket.emit('badRequest', {});
         return;
     }
 
-    console.log('474')
     const senderName = socket.handshake.session.username;
 
     if (receiverName === senderName) {
@@ -479,7 +477,6 @@ const createChallenge = (socket, io) => async ({receiverName, isRanked, color}) 
         return;
     }
 
-    console.log('482')
     const rooms = io.sockets.adapter.rooms;
 
     if (!rooms.get(receiverName) || rooms.get(receiverName).size == 0) {
@@ -488,7 +485,6 @@ const createChallenge = (socket, io) => async ({receiverName, isRanked, color}) 
     }
 
 
-    console.log('491')
     let senderColor;
     if (color === 'b' || color === 'w') {
         senderColor = color;
@@ -516,14 +512,12 @@ const createChallenge = (socket, io) => async ({receiverName, isRanked, color}) 
         return;
     }
 
-    console.log('518')
 
 
     socket.join(`${newChallenge._id}`);
 
 
     io.to(receiverName).emit('challengeRequest', {challenge: newChallenge});
-    console.log('525')
 
 };
 
