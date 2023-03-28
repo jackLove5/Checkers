@@ -1,24 +1,22 @@
 <html>
     <head>
         <title>Checkers</title>
-        <link rel="stylesheet" href="./styles.css" />
+        <link rel="stylesheet" href="/styles.css" />
         <base href=".">
     </head>
 
     <body>
         <div id="content">
-            <checkers-board id="board" data-cy="board"></checkers-board>
+            <checkers-board id="board" data-cy="board" color=""></checkers-board>
             <div id="moves">
                 <div id="eval"></div>
                 <div id="move-list" data-cy="moves"></div>
-                <p>
-                    <button id="bot">Do bot move</button>
-                </p>
             </div>
 
         </div>
 
-        <script type="module" src="./index.js"></script>
+        <script type="module" src="/analyze/bundle.js"></script>
 
     </body>
 </html>
+

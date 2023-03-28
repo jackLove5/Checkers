@@ -8,6 +8,7 @@ const gameRouter = require('./routes/game')
 const challengeRouter = require('./routes/challenge')
 const rankingsRouter = require('./routes/rankings')
 const playRouter = require('./routes/play');
+const homeRouter = require('./routes/home')
 
 const sessionMiddleware = session({
     secret: process.env.EXPRESS_SESSION_SECRET,
@@ -18,11 +19,13 @@ const sessionMiddleware = session({
 app.use(sessionMiddleware);
 
 app.use(express.json());
+app.use('/', homeRouter)
 app.use('/api/user', userRouter);
 app.use('/api/rankings', rankingsRouter);
 app.use('/api/game', gameRouter);
 app.use('/api/challenge', challengeRouter);
 app.use('/play', playRouter);
+
 app.use(express.static('./public'));
 
 module.exports = {app, sessionMiddleware};

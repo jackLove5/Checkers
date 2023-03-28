@@ -45,6 +45,8 @@ const createUser = async (req, res) => {
 
 
         res.status(200).send('');
+        req.session.username = req.body.username;
+        req.session.save();
     });
 }
 

@@ -1,5 +1,5 @@
 
-const CheckersBoard = require('./VersusBoard')
+const CheckersBoard = require('./CheckersBoard')
 const {io} = require('./socket-io.js');
 let socket = io.connect("/", {
     withCredentials: true
@@ -92,6 +92,18 @@ const socketHandlers = {
 
         document.getElementById('board').lockBoard();
         setInfoMessage(`${reason}. ${result}.`);
+
+        const buttonContainer = document.getElementById('button-span');
+        buttonContainer.innerHTML = '';
+        const analyzeButton = document.createElement('button');
+        analyzeButton.setAttribute('id', 'analyze');
+        analyzeButton.setAttribute('data-cy', 'analyze');
+        analyzeButton.addEventListener('click', (e) => {
+            window.location = `/analyze?g=${gameId}`;
+        });
+        analyzeButton.textContent = 'Analyze';
+        buttonContainer.appendChild(analyzeButton);
+
     },
 
     onOfferDraw({id, color}) {

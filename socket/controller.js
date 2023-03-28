@@ -137,9 +137,9 @@ const joinGame = (socket, io) => async ({id, color}) => {
                 } else {
                     color = chance.bool() ? 'b' : 'w';
                     if (color === 'b') {
-                        await Game.updateOne({id: _id}, {playerBlack: username});
+                        await Game.updateOne({_id: id}, {playerBlack: username});
                     } else {
-                        await Game.updateOne({id: _id}, {playerWhite: username});
+                        await Game.updateOne({_id: id}, {playerWhite: username});
                     }
                 }
             } else {
@@ -465,12 +465,21 @@ const callDraw = (socket, io) => async ({id}) => {
 }
 
 const createChallenge = (socket, io) => async ({receiverName, isRanked, color}) => {
+    console.log('in createChallegne')
     if (!socket.handshake.session || !socket.handshake.session.username) {
         socket.emit('badRequest', {});
         return;
     }
 
+    console.log('474')
     const senderName = socket.handshake.session.username;
+
+    if (receiverName === senderName) {
+        socket.emit('badRequest', {});
+        return;
+    }
+
+    console.log('482')
     const rooms = io.sockets.adapter.rooms;
 
     if (!rooms.get(receiverName) || rooms.get(receiverName).size == 0) {
@@ -479,6 +488,7 @@ const createChallenge = (socket, io) => async ({receiverName, isRanked, color}) 
     }
 
 
+    console.log('491')
     let senderColor;
     if (color === 'b' || color === 'w') {
         senderColor = color;
@@ -496,6 +506,7 @@ const createChallenge = (socket, io) => async ({receiverName, isRanked, color}) 
             isRanked
         });
     } catch (err) {
+         console.log(err);
         if (err.name == 'CastError') {
             socket.emit('badRequest');
         } else {
@@ -505,12 +516,14 @@ const createChallenge = (socket, io) => async ({receiverName, isRanked, color}) 
         return;
     }
 
+    console.log('518')
 
 
     socket.join(`${newChallenge._id}`);
 
 
     io.to(receiverName).emit('challengeRequest', {challenge: newChallenge});
+    console.log('525')
 
 };
 

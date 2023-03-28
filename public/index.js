@@ -2,7 +2,64 @@ let socket = io.connect("/", {
     withCredentials: true
 });
 
+const emittedEvents = {
+    respondToChallenge: (challengeId, accept) => socket.emit('respondToChallenge', {challengeId, accept})
+};
+
+const socketHandlers = {
+    onChallengeStart({gameId}) {
+        window.location = `/play/${gameId}`;
+    },
+
+    onChallengeRequest({challenge}) {
+
+        const detail = `<p>${challenge.senderName} is challenging you</p>
+         <p>${challenge.isRanked ? 'Ranked' : 'Unranked'}</p>
+         <p>You play ${challenge.playerBlack === challenge.receiverName ? 'Black' : 'White'} pieces
+        `;
+
+        const challengeDetail = document.createElement('p');
+        challengeDetail.innerHTML = detail;
+
+        const challengeDiv = document.createElement('div');
+        challengeDiv.setAttribute('data-cy', 'challenge-request');
+
+        const acceptChallenge = document.createElement('p');
+        acceptChallenge.setAttribute('data-cy', 'challenge-accept');
+        acceptChallenge.innerText = 'Accept';
+        acceptChallenge.addEventListener('click', (e) => {
+            emittedEvents.respondToChallenge(challenge._id, true);
+        });
+
+        const rejectChallenge = document.createElement('p');
+        rejectChallenge.setAttribute('data-cy', 'challenge-reject');
+        rejectChallenge.innerText = 'Reject';
+        rejectChallenge.addEventListener('click', (e) => {
+            emittedEvents.respondToChallenge(challenge._id, false);
+            challengeDiv.remove();
+        });
+
+        challengeDiv.appendChild(challengeDetail);
+        challengeDiv.appendChild(acceptChallenge);
+        challengeDiv.appendChild(rejectChallenge);
+        document.getElementById('notifications').appendChild(challengeDiv);
+    },
+
+    onChallengeRejected() {
+        alert('challengeRejected')
+    }
+};
+
+socket.on('challengeStart', socketHandlers.onChallengeStart);
+socket.on('challengeRejected', socketHandlers.onChallengeRejected);
+socket.on('challengeRequest', socketHandlers.onChallengeRequest);
+if (window.Cypress) {
+    window.socketHandlers = socketHandlers;
+    window.emittedEvents = emittedEvents;
+}
+
 window.addEventListener('load', (e) => {
+
     const playAgainstFriendButton = document.getElementById('play-friend');
 
     playAgainstFriendButton.onclick = async (e) => {
@@ -33,15 +90,4 @@ window.addEventListener('load', (e) => {
         const json = await resp.json();
         window.location = `/play/${json._id}`;
     }
-
-    socket.on('challengeRequest', ({challenge}) => {
-        const challengeText = `received challenge: ${JSON.stringify(challenge)}`;
-        const accept = confirm(challengeText);
-        socket.emit('respondToChallenge', {challengeId: challenge._id, accept})
-    });
-
-    socket.on('challengeStart', ({gameId}) => {
-        window.location = `/play/${gameId}`;
-    })
-    socket.on('challengeRejected', () => alert('challengeRejected'));
 });

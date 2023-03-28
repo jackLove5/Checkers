@@ -98,7 +98,7 @@ const getGameById = async (req, res) => {
         return;
     }
 
-    res.status(200).json('');
+    res.status(200).json(game);
 }
 
 module.exports = {createGame, getGamesByUsername, getGameById}

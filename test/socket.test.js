@@ -1159,6 +1159,21 @@ describe('createChallenge', () => {
             done();
         })
     });
+
+    it('should emit badRequest if user challenges themselves', (done) => {
+
+        player1Socket.disconnect();
+        player1Socket.connect();
+        ioServer.once('connect', (socket) => {
+            socket.handshake.session.username = 'player1Name';
+
+            player1Socket.emit('createChallenge', {receiverName: 'player1Name', isRanked: false, color: 'b'});
+            player1Socket.on('badRequest', () => {
+                done();
+            })
+
+        });
+    });
 });
 
 describe('respondToChallenge', () => {

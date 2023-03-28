@@ -1,5 +1,5 @@
-import { CheckersAi } from "./CheckersAi.js";
-import { CheckersGame } from "./CheckersGame.js";
+const CheckersGame = require('./CheckersGame');
+const CheckersAi = require('./CheckersAi');
 
 class MoveOptions {
     constructor() {
@@ -33,65 +33,63 @@ class MoveOptions {
     }
 }
 
-export class CheckersBoard extends HTMLElement{
+class CheckersBoard extends HTMLElement{
     constructor() {
         super();
         this.attachShadow({ mode: 'open' });
 
-        this.shadowRoot.innerHTML = `<link rel="stylesheet" href="./board_styles.css" />`;
+        this.shadowRoot.innerHTML = `<link rel="stylesheet" href="/board_styles.css" />`;
         this.game = new CheckersGame();
         this.moveOptions = null;
         this.moveOptionsPtr = null;
+        this.ai = new CheckersAi(this.game);
+
+        const color = this.getAttribute('color') || 'b';
+        this.color = color;
+
+        this.isLocked = false;
         let div = document.createElement("div");
         this.createDiv(div);
-        this.game.start();
-        this.ai = new CheckersAi(this.game);
+
         this.drawBoard();
+        this.game.start();
+    }
+
+    getFen() {
+        return this.game.getFen();
     }
 
     getEval() {
         return this.ai.getNextMove();
     }
 
-    doBotMove() {
-        const [move, v] = this.ai.getNextMove();
-        const [origin, dst] = move.shortNotation.split(/x|-/);
-        const longNotation = move.longNotation;
-        this.game.doMove(origin, dst, longNotation);
-        const moveText = longNotation;
-        const moveEvent = new CustomEvent('move', { 
-            bubbles: true,
-            detail: { moveText },
-          });
-        
-        this.dispatchEvent(moveEvent);
+    undoLastMove() {
+        this.game.undoLastMove();
+        super.drawBoard();
 
-        if (this.game.getWinner()) {
-            const text = this.game.getWinner() === CheckersGame.PLAYER_BLACK ? "Black Wins!" : "White Wins!";
-            const winEvent = new CustomEvent('win', {
-                bubbles: true,
-                detail: { text }
-            });
-
-            this.dispatchEvent(winEvent);
-        }
-        
-        this.drawBoard();
-        return v;
     }
 
-    
+    lockBoard() {
+        this.isLocked = true;
+    }
+
     drawBoard() {
         for (let i = 1; i <= 32; i++) {
             const squareDiv = this.shadowRoot.querySelector(`[data-pos="${i}"]`);
             const pieceDiv = squareDiv.firstChild;
             pieceDiv.classList.remove(...pieceDiv.classList);
+            pieceDiv.setAttribute('data-cy', '');
 
             const piece = this.game.getPieceAtPosition(i);
             if (piece) {
+                let dataCy = 'piece';
                 pieceDiv.classList.add("piece");
+                
                 pieceDiv.classList.add(piece.color === CheckersGame.PLAYER_BLACK ? "black" : "white");
+                dataCy += piece.color === CheckersGame.PLAYER_BLACK ? " black" : " white";
                 pieceDiv.classList.toggle("king", piece.isKing);
+                dataCy += piece.isKing ? " king" : "";
+                pieceDiv.setAttribute('data-cy', dataCy);
             }
         }
     }
@@ -102,8 +100,10 @@ export class CheckersBoard extends HTMLElement{
             for (let col = 0; col < 8; col++) {
                 const squareDiv = document.createElement("div");
                 if (row % 2 !== col % 2) {
-                    squareDiv.setAttribute("data-pos", ++pieceCount);
-                    squareDiv.setAttribute("data-cy", `square-${pieceCount}`)
+                    const pos = this.color === CheckersGame.PLAYER_WHITE ? pieceCount + 1 : 32 - pieceCount;
+                    pieceCount++;
+                    squareDiv.setAttribute("data-pos", pos);
+                    squareDiv.setAttribute("data-cy", `square-${pos}`)
                     const that = this;
                     squareDiv.onclick = function() { that.clickSquare(squareDiv.getAttribute("data-pos")) }
                     squareDiv.ondragover = function(e) { e.preventDefault();}
@@ -122,9 +122,15 @@ export class CheckersBoard extends HTMLElement{
         }
 
         div.setAttribute("id", "gameboard");
+        div.setAttribute("data-cy", "gameboard");
         this.shadowRoot.appendChild(div);
     }
 
+
+    setBoardFromFen(fen) {
+        this.game.constructFromFen(fen);
+        this.drawBoard();
+    }
 
     clickSquare(position) {
 
@@ -132,6 +138,7 @@ export class CheckersBoard extends HTMLElement{
             const squareDiv = this.shadowRoot.querySelector(`[data-pos="${i}"]`).firstChild;
             squareDiv.classList.remove("highlight");
             squareDiv.setAttribute('data-cy', squareDiv.getAttribute('data-cy').replace('highlight', ''));
+
         }
 
         let destinationSquares = [];
@@ -187,7 +194,7 @@ export class CheckersBoard extends HTMLElement{
                 this.moveOptionsPtr = null;
                 this.moveOptions = null;
             }
-        } else {
+        } else if (!this.isLocked && this.game.getPieceAtPosition(position) && this.game.getPieceAtPosition(position).color === this.color) {
             const validMoves = this.game.getPlayableMovesByPosition(position);
             if (validMoves.length > 0) {
                 this.moveOptions = new MoveOptions();
@@ -206,12 +213,8 @@ export class CheckersBoard extends HTMLElement{
             squareDiv.setAttribute('data-cy', squareDiv.getAttribute('data-cy') + " highlight");
         });
     }
-
-    undoLastMove() {
-        this.game.undoLastMove();
-        this.drawBoard();
-
-    }
 }
 
 customElements.define('checkers-board', CheckersBoard);
+
+module.exports = CheckersBoard;

@@ -5,13 +5,14 @@
   "main": "index.js",
   "scripts": {
     "test": "jest",
-    "start": "npx browserify ./public/play.js > ./public/playbundle.js && node server.js"
+    "start": "npx browserify ./public/play.js > ./public/playbundle.js && npx browserify ./public/analyze/index.js > ./public/analyze/bundle.js && node server.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
     "bcrypt": "^5.1.0",
+    "cheerio": "^1.0.0-rc.12",
     "dotenv": "^16.0.3",
     "express": "^4.18.2",
     "express-session": "^1.17.3",
