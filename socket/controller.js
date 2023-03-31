@@ -82,12 +82,7 @@ const joinGame = (socket, io) => async ({id, color}) => {
     } else if (game.vsCpu && playerCount === 1) {
         const checkersGame = new CheckersGame();
         checkersGame.start();
-        try {
-            await Game.updateOne({_id: id}, {gameState: 'in_progress'});
-        } catch (error) {
-            io.to(socket.id).emit('serverError');
-            return;
-        }
+
 
         const moveOptions = checkersGame.getPlayableMoves();
         
@@ -99,6 +94,19 @@ const joinGame = (socket, io) => async ({id, color}) => {
         }
 
         const cpuColor = playerColor === 'b' ? 'w' : 'b';
+
+        const playerUsername = socket.handshake.session.username || 'Guest';
+
+        try {
+            await Game.updateOne({_id: id}, {
+                gameState: 'in_progress',
+                playerBlack: cpuColor == 'b' ? 'Computer' : playerUsername,
+                playerWhite: cpuColor === 'w' ? 'Computer' : playerUsername
+            });
+        } catch (error) {
+            io.to(socket.id).emit('serverError');
+            return;
+        }
 
         io.to(socket.id).emit('startGame', {moveOptions, color: playerColor});
         socket.handshake.session.reload((err) => {
@@ -204,7 +212,7 @@ const disconnecting = (socket, io) => async ({}) => {
         try {
             game = await Game.findByIdAndUpdate(roomId, {disconnectTime: String(Date.now())}, {new: true})
         } catch (err) {
-            return;
+            continue;
         }
 
 
@@ -502,7 +510,6 @@ const createChallenge = (socket, io) => async ({receiverName, isRanked, color}) 
             isRanked
         });
     } catch (err) {
-         console.log(err);
         if (err.name == 'CastError') {
             socket.emit('badRequest');
         } else {

@@ -1926,3 +1926,86 @@ test('getFen() should return current state of the board', () => {
     const fen = game.getFen();
     expect(fen).toBeTruthy();
 })
+
+test("draws calculated by ai should not affect the draw status of the actual game", () => {
+    const game = new CheckersGame();
+    const ai = new CheckersAi(game);
+    game.start();
+
+    game.doMove("10", "14");
+    game.doMove("22", "18");
+    game.doMove("7", "10");
+    game.doMove("23", "19");
+    game.doMove("14", "23");
+    game.doMove("27", "18");
+    game.doMove("11", "15");
+
+    game.doMove("18", "11");
+    game.doMove("8", "15");
+
+    game.doMove("21", "17");
+    game.doMove("9", "14");
+    game.doMove("17", "13");
+    game.doMove("5", "9");
+    game.doMove("24", "20");
+    game.doMove("15", "24");
+    game.doMove("28", "19");
+    game.doMove("4", "8");
+    game.doMove("25", "21");
+    game.doMove("8", "11");
+    game.doMove("26", "23");
+    game.doMove("10", "15");
+    game.doMove("19", "10");
+    game.doMove("6", "15");
+    game.doMove("13", "6");
+    game.doMove("2", "9");
+    game.doMove("23", "19");
+    game.doMove("15", "24");
+    game.doMove("32", "28");
+    game.doMove("12", "16");
+    game.doMove("28", "12");
+    game.doMove("11", "15");
+    game.doMove("20", "16");
+    game.doMove("14", "18");
+    game.doMove("16", "11");
+    game.doMove("15", "19");
+    game.doMove("11", "8");
+    game.doMove("19", "24");
+    game.doMove("8", "4");
+    game.doMove("24", "28");
+    game.doMove("4", "8");
+    game.doMove("28", "32");
+    game.doMove("8", "11");
+    game.doMove("18", "23");
+    game.doMove("11", "15");
+    game.doMove("9", "14");
+    game.doMove("15", "19");
+    game.doMove("23", "27");
+    game.doMove("31", "24");
+    game.doMove("14", "18");
+    game.doMove("21", "17");
+    game.doMove("18", "22");
+
+    game.doMove("17", "13");
+    game.doMove("3", "7");
+
+    game.doMove("12", "8");
+    game.doMove("7", "10");
+
+    game.doMove("8", "4");
+    game.doMove("10", "14");
+
+    game.doMove("4", "8");
+    game.doMove("14", "17");
+    game.doMove("8", "12");
+    game.doMove("17", "21");
+    game.doMove("12", "16");
+    game.doMove("1", "6");
+    
+    let [move, _] = ai.getNextMove();
+    let [src, dst] = move.shortNotation.split(/-|x/);
+    
+    game.doMove(src, dst);
+    
+    expect(game.isDraw()).toBe(false);
+});

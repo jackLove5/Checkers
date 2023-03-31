@@ -364,18 +364,25 @@ class CheckersGame {
             }
 
             this.turn = this.turn === CheckersGame.PLAYER_BLACK ? CheckersGame.PLAYER_WHITE : CheckersGame.PLAYER_BLACK;
-
-            const currentFen = getFen();
-            if (!this.isDraw() && stateStack.filter(s => s.fen === currentFen).length === 2) {
-                this.isDraw = () => true;
-            }
-
-            const movesSinceLastAdvance = Math.floor((stateStack.length - 1 - lastAdvance) / 2);
-            const movesSinceLastCapture = Math.floor((stateStack.length - 1 - lastCapture) / 2);
-            if (!this.isDraw() && movesSinceLastAdvance >= 40 && movesSinceLastCapture >= 40) {
-                this.isDraw = () => true;
-            }
         };
+
+        this.isDraw = () => {
+            const hasThreefold = stateStack.filter(s => s.fen === getFen()).length === 2;
+            if (hasThreefold) {
+                return true;
+            }
+            if (stateStack.length > 0) {
+                const {lastAdvance, lastCapture} = stateStack.at(-1);
+                const movesSinceLastAdvance = Math.floor((stateStack.length - 1 - lastAdvance) / 2);
+                const movesSinceLastCapture = Math.floor((stateStack.length - 1 - lastCapture) / 2);
+                if (movesSinceLastAdvance >= 40 && movesSinceLastCapture >= 40) {
+                    return true;
+                }
+            }
+
+            return false;
+
+        }
 
         this.constructFromFen = (fen) => {
             for (let i = 1; i <= 32; i++) {
@@ -440,7 +447,6 @@ class CheckersGame {
             this.whitePiecesInStartingPosition = true;
             this.blackPiecesInStartingPosition = true;
             this.turn = CheckersGame.PLAYER_BLACK;
-            this.isDraw = () => false;
         }
     }
 

@@ -2,6 +2,8 @@ let socket = io.connect("/", {
     withCredentials: true
 });
 
+let onlineUsers = new Set();
+
 const emittedEvents = {
     createChallenge: (receiverName, isRanked, color) => {
         socket.emit('createChallenge', {receiverName, isRanked, color});
@@ -26,11 +28,23 @@ const socketHandlers = {
 
         challengeDiv.appendChild(challengeDetail);
         document.getElementById('notifications').appendChild(challengeDiv);
+    },
+    onOnlineUsers({usernames}) {
+        onlineUsers = new Set(usernames);
+
+        const username = document.getElementById('username').innerText;
+        const statusDiv = document.createElement('div');
+        statusDiv.setAttribute('data-cy', 'status');
+        const isOnline = onlineUsers.has(username);
+        statusDiv.setAttribute('data-status', isOnline ? 'online' : 'offline');
+        statusDiv.textContent = statusDiv.getAttribute('data-status');
+        document.querySelector('body').appendChild(statusDiv);
     }
 }
 
 socket.on('challengeStart', socketHandlers.onChallengeStart);
 socket.on('challengeRejected', socketHandlers.onChallengeRejected);
+socket.on('onlineUsers', socketHandlers.onOnlineUsers);
 
 if (window.Cypress) {
     window.emittedEvents = emittedEvents;
@@ -40,20 +54,37 @@ window.addEventListener('load', async (e) => {
 
     const username = new URLSearchParams(window.location.search).get('u');
 
-    const res = await fetch(`/api/user/${username}`,{
+    const userRes = await fetch(`/api/user/${username}`,{
         method: 'GET'
     });
 
-    if (res.status === 400) {
+    if (userRes.status === 400) {
         document.write('bad request');
         return;
-    } else if (res.status === 404) {
+    } else if (userRes.status === 404) {
         document.write('user not found');
         return;
     }
 
-    const resJson = await res.json();
-    document.getElementById('username').textContent = resJson.username;
+    const userResJson = await userRes.json();
+    document.getElementById('username').textContent = userResJson.username;
+
+    const gamesRes = await fetch(`/api/game?u=${username}`, {method: 'GET'});
+    if (gamesRes.status === 400) {
+        document.write('bad request');
+        return;
+    }
+
+    const gamesResJson = await gamesRes.json();
+
+    gamesResJson.games.forEach(game => {
+        const gameDiv = document.createElement('div');
+        gameDiv.setAttribute('data-cy', 'game');
+        gameDiv.textContent = JSON.stringify(game);
+
+        document.getElementById('games').appendChild(gameDiv);
+    })
+
 
     const challengeButton = document.getElementById('challenge');
 

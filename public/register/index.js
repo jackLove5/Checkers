@@ -16,7 +16,7 @@ window.addEventListener('load', (e) => {
         });
 
         if (res.status === 200) {
-            window.location = `/profile?u=${username}`
+            window.location = `/`
         } else {
             alert('error');
         }

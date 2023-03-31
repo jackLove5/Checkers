@@ -7,6 +7,10 @@ const emittedEvents = {
 };
 
 const socketHandlers = {
+
+    onOnlineUsers({usernames}) {
+        //alert(JSON.stringify(usernames));
+    },
     onChallengeStart({gameId}) {
         window.location = `/play/${gameId}`;
     },
@@ -46,13 +50,15 @@ const socketHandlers = {
     },
 
     onChallengeRejected() {
-        alert('challengeRejected')
+        //alert('challengeRejected')
     }
 };
 
 socket.on('challengeStart', socketHandlers.onChallengeStart);
 socket.on('challengeRejected', socketHandlers.onChallengeRejected);
 socket.on('challengeRequest', socketHandlers.onChallengeRequest);
+socket.on('onlineUsers', socketHandlers.onOnlineUsers);
+
 if (window.Cypress) {
     window.socketHandlers = socketHandlers;
     window.emittedEvents = emittedEvents;

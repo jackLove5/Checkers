@@ -12,6 +12,7 @@ const setupSocketServer = (server) => {
 
         if (socket.handshake.session && socket.handshake.session.username) {
             socket.join(socket.handshake.session.username);
+            socket.join("loggedIn");
         }
 
         socket.on('joinGame', joinGame(socket, io));
@@ -25,6 +26,16 @@ const setupSocketServer = (server) => {
 
         socket.on('createChallenge', createChallenge(socket, io));
         socket.on('respondToChallenge', respondToChallenge(socket, io));
+
+        let usernames = [];
+        if (io.sockets.adapter.rooms.get('loggedIn')) {
+            const sockets = Array.from(io.sockets.adapter.rooms.get('loggedIn')).map(sid => io.sockets.sockets.get(sid)).map(socket => socket.handshake.session.username);
+            usernames = Array.from(io.sockets.adapter.rooms.get('loggedIn'))
+                .map(socketId => io.sockets.sockets.get(socketId))
+                .map(socket => socket.handshake.session.username);
+        }
+
+        io.to('loggedIn').emit('onlineUsers', {usernames});
     });
 
 
