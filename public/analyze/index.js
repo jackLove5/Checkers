@@ -2,15 +2,68 @@
 const CheckersBoard = require('../CheckersBoard');
 const CheckersAi = require('../CheckersAi');
 const CheckersGame = require('../CheckersGame');
+let socket = io.connect("/", {
+    withCredentials: true
+});
+
 
 const analyzeGame = new CheckersGame();
 analyzeGame.start();
 const initialFen = analyzeGame.getFen();
 const ai = new CheckersAi(analyzeGame);
 
+const onChallengeStart = ({gameId}) => {
+    window.location = `/play/${gameId}`;
+}
 
+const onChallengeRequest = ({challenge}) => {
+
+    const detail = `<p>${challenge.senderName} is challenging you</p>
+     <p>${challenge.isRanked ? 'Ranked' : 'Unranked'}</p>
+     <p>You play ${challenge.playerBlack === challenge.receiverName ? 'Black' : 'White'} pieces
+    `;
+
+    const challengeDetail = document.createElement('p');
+    challengeDetail.innerHTML = detail;
+
+    const challengeDiv = document.createElement('div');
+    challengeDiv.setAttribute('data-cy', 'challenge-request');
+
+    const acceptChallenge = document.createElement('p');
+    acceptChallenge.setAttribute('data-cy', 'challenge-accept');
+    acceptChallenge.innerText = 'Accept';
+    acceptChallenge.addEventListener('click', (e) => {
+        emittedEvents.respondToChallenge(challenge._id, true);
+    });
+
+    const rejectChallenge = document.createElement('p');
+    rejectChallenge.setAttribute('data-cy', 'challenge-reject');
+    rejectChallenge.innerText = 'Reject';
+    rejectChallenge.addEventListener('click', (e) => {
+        emittedEvents.respondToChallenge(challenge._id, false);
+        challengeDiv.remove();
+    });
+
+    challengeDiv.appendChild(challengeDetail);
+    const respondDiv = document.createElement('div');
+    respondDiv.classList.add('response-options');
+    respondDiv.appendChild(acceptChallenge);
+    respondDiv.appendChild(rejectChallenge);
+
+    challengeDiv.appendChild(respondDiv);
+    document.getElementById('notifications').appendChild(challengeDiv);
+}
+
+socket.on('challengeStart', onChallengeStart);
+socket.on('challengeRequest', onChallengeRequest)
 
 window.addEventListener('load', async (e) => {
+    const mobileNavToggle = document.querySelector('.mobile-nav-toggle');
+    const nav = document.querySelector('nav');
+    mobileNavToggle.addEventListener('click', () => {
+        nav.toggleAttribute('data-visible');
+        mobileNavToggle.setAttribute('aria-expanded', nav.hasAttribute('data-visible'));
+    });
 
     const gameId = new URLSearchParams(window.location.search).get('g');
     const res = await fetch (`/api/game/${gameId}`, { method: 'GET'});

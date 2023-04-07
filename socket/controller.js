@@ -215,6 +215,10 @@ const disconnecting = (socket, io) => async ({}) => {
             continue;
         }
 
+        if (!game) {
+            continue;
+        }
+
 
         let playerCount = io.sockets.adapter.rooms.get(roomId) ? io.sockets.adapter.rooms.get(roomId).size : 0;
         if (playerCount === 0) {

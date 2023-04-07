@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkers - Login</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <link rel="stylesheet" href="/login/styles.css" />
+</head>
+<body>
+    <script src="/login/index.js"></script>
+    <div class="nav-wrapper">
+        <button class="mobile-nav-toggle">
+
+        </button>
+        <nav id="navbar" data-cy="navbar">
+            <ul id="nav-list"></ul>
+        </nav>
+    </div>
+
+    <main>
+        <h1>Login</h1>
+        <form id="login-form" data-cy="login-form" action="/api/user/login" method="post">
+            <div class="input-group">
+                <label for="username">Username:</label>
+                <input id="username" data-cy="username" name="username" type="text">
+            </div>
+
+            <div class="input-group">
+                <label for="password">Password:</label>
+                <input id="password" data-cy="password" name="password" type="password">
+            </div>
+
+
+            <input id="submit" class="button" data-cy="submit" type="submit" value="submit">
+        </form>
+
+        <p id="register" data-cy="register">Don't have an Account? <a href="/register">Register</a></p>
+
+    </main>
+
+</body>
+</html>

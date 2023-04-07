@@ -1,0 +1,57 @@
+a {
+    text-decoration: none;
+    color: #008fcc;
+}
+
+a:hover {
+    color: #228b22;
+}
+main {
+    display: flex;
+    justify-content: center;
+    margin-top: 3rem;
+}
+
+#player-table {
+    background-color: white;
+    border: 1px solid black;
+    border-collapse: collapse;
+}
+
+
+th {
+    border: 1px solid black;
+}
+tr {
+    border: 1px solid black;
+}
+td {
+    border: 1px solid black;
+    text-align: center;
+}
+#player-table.player {
+    display: block;
+    text-align: left;
+}
+
+.online {
+    width: 0.5rem;
+    height: 0.5rem;
+    background-color: green;
+    display: none;
+    border-radius: 100%;
+    margin-right: 0.5rem;
+}
+
+[data-visible].online {
+    display: inline-block;
+}
+
+.username {
+    text-align: left;
+    padding-inline: 0.5rem;
+}
+
+thead th {
+    padding: 0.25rem;
+}

@@ -35,7 +35,7 @@ const setupSocketServer = (server) => {
                 .map(socket => socket.handshake.session.username);
         }
 
-        io.to('loggedIn').emit('onlineUsers', {usernames});
+        io.emit('onlineUsers', {usernames});
     });
 
 

@@ -57,8 +57,8 @@ describe('Player vs Player', () => {
 
 
     describe('setup', () => {
-      it("message should be blank when page loads", () => {
-        cy.getByData('message').should('have.text', '');
+      it("message should have waiting for players message page loads", () => {
+        cy.getByData('message').should('contain.text', 'Waiting');
   
       });
 
@@ -303,7 +303,7 @@ describe('Player vs Player', () => {
         cy.getByData('message').should('contain.text', 'Opponent left');
         cy.window().its('socketHandlers').invoke('onPlayerReconnect', {color: 'w'});
   
-        cy.getByData('message').should('have.text', '');
+        cy.getByData('message').should('not.be.visible');
         cy.getByData('claim-win').should('not.exist');
         cy.getByData('call-draw').should('not.exist');
       });

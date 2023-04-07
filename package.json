@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "jest",
-    "start": "npx browserify ./public/play.js > ./public/playbundle.js && npx browserify ./public/analyze/index.js > ./public/analyze/bundle.js && node server.js"
+    "start": "npx browserify ./public/play.js > ./public/playbundle.js && npx browserify ./public/analyze/index.js > ./public/analyze/bundle.js && npx browserify ./public/index.js > ./public/homebundle.js && node server.js"
   },
   "keywords": [],
   "author": "",

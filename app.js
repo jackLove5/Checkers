@@ -1,15 +1,17 @@
+const fs = require('fs');
+const path = require('path');
 const express = require('express')
 const session = require('express-session')
 const app = express()
 require('dotenv').config();
 
-const userRouter = require('./routes/user')
-const gameRouter = require('./routes/game')
-const challengeRouter = require('./routes/challenge')
-const rankingsRouter = require('./routes/rankings')
-const playRouter = require('./routes/play');
-const homeRouter = require('./routes/home')
+const userRouter = require('./routes/api/user')
+const gameRouter = require('./routes/api/game')
+const challengeRouter = require('./routes/api/challenge')
+const rankingsRouter = require('./routes/api/rankings')
+const playRouter = require('./routes/pages/play');
 
+const {addMenuItems} = require('./middleware/navbar');
 const sessionMiddleware = session({
     secret: process.env.EXPRESS_SESSION_SECRET,
     resave: true,
@@ -19,13 +21,26 @@ const sessionMiddleware = session({
 app.use(sessionMiddleware);
 
 app.use(express.json());
-app.use('/', homeRouter)
 app.use('/api/user', userRouter);
 app.use('/api/rankings', rankingsRouter);
 app.use('/api/game', gameRouter);
 app.use('/api/challenge', challengeRouter);
+app.use(addMenuItems);
+
+const sendHtml = filename => (req, res) => {
+    res.send(fs.readFileSync(path.resolve(__dirname, `./html/${filename}`), {encoding: 'utf-8'}));
+}
+fs.readdirSync(path.resolve(__dirname, './html')).forEach(filename => {
+    const path = filename === 'homepage.html' ? '' : filename.split(/\./)[0];
+    const router = express.Router();
+    router.route('/').get(sendHtml(filename));
+    app.use(`/${path}`, router);
+});
+
 app.use('/play', playRouter);
 
 app.use(express.static('./public'));
+
+
 
 module.exports = {app, sessionMiddleware};

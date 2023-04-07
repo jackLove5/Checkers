@@ -101,4 +101,20 @@ const getUserByUsername = async (req, res) => {
     }
 }
 
-module.exports = {createUser, authenticateUser, getUserByUsername}
+const logout = (req, res, next) => {
+    req.session.user = null;
+    req.session.save((err) => {
+        if (err) {
+            next(err);
+        }
+
+        req.session.regenerate((err) => {
+            if (err) {
+                next(err);
+            }
+            res.redirect('/');
+        })
+    })
+}
+
+module.exports = {createUser, authenticateUser, getUserByUsername, logout}

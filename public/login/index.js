@@ -1,4 +1,11 @@
 window.addEventListener('load', (e) => {
+    const mobileNavToggle = document.querySelector('.mobile-nav-toggle');
+    const nav = document.querySelector('nav');
+    mobileNavToggle.addEventListener('click', () => {
+        nav.toggleAttribute('data-visible');
+        mobileNavToggle.setAttribute('aria-expanded', nav.hasAttribute('data-visible'));
+    });
+
     const loginForm = document.getElementById('login-form');
 
     loginForm.addEventListener('submit', async (e) => {

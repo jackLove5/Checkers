@@ -4,18 +4,39 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Checkers - Home</title>
+    <link rel="stylesheet" href="/styles.css"/>
 </head>
 <body>
     <script src="/socket.io.js"></script>
+    <script src="/homebundle.js"></script>
 
-    <script src="/index.js"></script>
-    <nav id="navbar" data-cy="navbar">
-        <div id="playnow", data-cy="playnow">Play Now</div>
+    <div class="nav-wrapper">
+        <button class="mobile-nav-toggle" data-cy="nav-toggle">
+
+        </button>
+        <nav id="navbar" data-cy="navbar">
+            <ul id="nav-list"></ul>
+        </nav>
+    </div>
+
+    <main>
+        <div id="message">
+            <h1>Checkers</h1>
+        </div>
+        <div id="board-wrapper">
+            <div id="board">
+                <checkers-board id="checkers-board" color=""></checkers-board>
+            </div>
+        </div>
+
+        <div id="buttons">
+            <button class="button" id="play-friend" data-cy="play-friend">Play vs Friend</button>
+            <button class="button" id="play-comp" data-cy="play-comp">Play vs Computer</button>
+        </div>
         
-    </nav>
-    <button id="play-friend" data-cy="play-friend">Play Against Friend</button>
-    <button id="play-comp" data-cy="play-comp">Play Against Computer</button>
+    </main>
+    
     <div id="notifications" data-cy="notifications"></div>
 </body>
 </html>

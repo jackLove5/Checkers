@@ -1,4 +1,4 @@
-const {createGame, getGamesByUsername, getGameById} = require('../controller/game')
+const {createGame, getGamesByUsername, getGameById} = require('../../controller/game')
 const express = require('express')
 const router = express.Router();
 

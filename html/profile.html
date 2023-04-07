@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <link rel="stylesheet" href="/profile/styles.css" />
+</head>
+<body>
+    <script src="/socket.io.js"></script>
+    <script src="/profile/index.js"></script>
+    <div class="nav-wrapper">
+        <button class="mobile-nav-toggle">
+
+        </button>
+        <nav id="navbar" data-cy="navbar">
+            <ul id="nav-list"></ul>
+        </nav>
+    </div>
+    <header id="profile-header">
+        <h1 id="username" data-cy="username"></h1>
+        <button id="challenge" data-cy="challenge" class="button">Challenge</button>
+    </header>
+    <main id="content">
+        <section id="game-section">
+            <h2>Games</h2>
+            <div id="games" data-cy="games"></div>
+        </section>
+    </main>
+
+    <div id="create-box" data-cy="create-box"></div>
+    <div id="notifications" data-cy="notifications"></div>
+
+</body>
+</html>

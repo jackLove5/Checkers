@@ -1,0 +1,36 @@
+<html>
+    <head>
+        <title>Checkers - Leaderboard</title>
+        <link rel="stylesheet" href="/styles.css" />
+        <link rel="stylesheet" href="/leaderboard/styles.css">
+        <base href=".">
+    </head>
+
+    <body>
+        <div class="nav-wrapper">
+            <button class="mobile-nav-toggle">
+    
+            </button>
+            <nav id="navbar" data-cy="navbar">
+                <ul id="nav-list"></ul>
+            </nav>
+        </div>
+        <main id="content">
+            <table id="player-table" data-cy="player-table">
+                <thead>
+                    <tr>
+                        <th>Rank</th>
+                        <th>Username</th>
+                        <th>Rating</th>
+                    </tr>
+                </thead>
+                <tbody id="player-list" data-cy="player-list"></tbody>
+            </table>
+            <div id="notifications" data-cy="notifications"></div>
+        </main>
+
+        <script type="module" src="/socket.io.js"></script>
+        <script type="module" src="/leaderboard/index.js"></script>
+
+    </body>
+</html>

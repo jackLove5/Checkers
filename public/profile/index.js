@@ -1,6 +1,8 @@
+
 let socket = io.connect("/", {
     withCredentials: true
 });
+
 
 let onlineUsers = new Set();
 
@@ -15,7 +17,44 @@ const socketHandlers = {
     onChallengeStart({gameId}) {
         window.location = `/play/${gameId}`;
     },
+    
+    onChallengeRequest({challenge}) {
+    
+        const detail = `<p>${challenge.senderName} is challenging you</p>
+         <p>${challenge.isRanked ? 'Ranked' : 'Unranked'}</p>
+         <p>You play ${challenge.playerBlack === challenge.receiverName ? 'Black' : 'White'} pieces
+        `;
+    
+        const challengeDetail = document.createElement('p');
+        challengeDetail.innerHTML = detail;
+    
+        const challengeDiv = document.createElement('div');
+        challengeDiv.setAttribute('data-cy', 'challenge-request');
+    
+        const acceptChallenge = document.createElement('p');
+        acceptChallenge.setAttribute('data-cy', 'challenge-accept');
+        acceptChallenge.innerText = 'Accept';
+        acceptChallenge.addEventListener('click', (e) => {
+            emittedEvents.respondToChallenge(challenge._id, true);
+        });
+    
+        const rejectChallenge = document.createElement('p');
+        rejectChallenge.setAttribute('data-cy', 'challenge-reject');
+        rejectChallenge.innerText = 'Reject';
+        rejectChallenge.addEventListener('click', (e) => {
+            emittedEvents.respondToChallenge(challenge._id, false);
+            challengeDiv.remove();
+        });
+    
+        challengeDiv.appendChild(challengeDetail);
+        const respondDiv = document.createElement('div');
+        respondDiv.classList.add('response-options');
+        respondDiv.appendChild(acceptChallenge);
+        respondDiv.appendChild(rejectChallenge);
 
+        challengeDiv.appendChild(respondDiv);
+        document.getElementById('notifications').appendChild(challengeDiv);
+    },
     onChallengeRejected() {
         const detail = `<p>Challenge rejected</p>`;
 
@@ -45,12 +84,20 @@ const socketHandlers = {
 socket.on('challengeStart', socketHandlers.onChallengeStart);
 socket.on('challengeRejected', socketHandlers.onChallengeRejected);
 socket.on('onlineUsers', socketHandlers.onOnlineUsers);
+socket.on('challengeRequest', socketHandlers.onChallengeRequest);
 
 if (window.Cypress) {
     window.emittedEvents = emittedEvents;
     window.socketHandlers = socketHandlers;
 }
 window.addEventListener('load', async (e) => {
+
+    const mobileNavToggle = document.querySelector('.mobile-nav-toggle');
+    const nav = document.querySelector('nav');
+    mobileNavToggle.addEventListener('click', () => {
+        nav.toggleAttribute('data-visible');
+        mobileNavToggle.setAttribute('aria-expanded', nav.hasAttribute('data-visible'));
+    });
 
     const username = new URLSearchParams(window.location.search).get('u');
 
@@ -77,11 +124,21 @@ window.addEventListener('load', async (e) => {
 
     const gamesResJson = await gamesRes.json();
 
-    gamesResJson.games.forEach(game => {
+    gamesResJson.games.filter(game => game.gameState === 'completed').forEach(game => {
         const gameDiv = document.createElement('div');
+        gameDiv.classList.add('game');
         gameDiv.setAttribute('data-cy', 'game');
-        gameDiv.textContent = JSON.stringify(game);
+        const playerBlackLink = game.playerBlack === 'Computer' ? 'Computer' : `<a href="/profile?u=${game.playerBlack}">${game.playerBlack}</a>`;
+        const playerWhiteLink = game.playerWhite === 'Computer' ? 'Computer' : `<a href="/profile?u=${game.playerWhite}">${game.playerWhite}</a>`;
+        const html = `<div class="versus">${playerBlackLink} vs ${playerWhiteLink}</div>
+                      <div class="type">${game.isRanked ? 'Ranked' : 'Unranked'}</div>
+                      <div class="result"> ${game.result === 'd' ? 'Draw' : (game.result === 'b' ? game.playerBlack : game.playerWhite) + " Wins"}</div>`;
 
+        gameDiv.innerHTML = html;
+
+        gameDiv.addEventListener('click', (e) => {
+            window.location = `/analyze?g=${game._id}`;
+        });
         document.getElementById('games').appendChild(gameDiv);
     })
 
@@ -91,61 +148,102 @@ window.addEventListener('load', async (e) => {
     challengeButton.addEventListener('click', (e) => {
         const createChallengeDiv = document.createElement('div');
         createChallengeDiv.setAttribute('data-cy', 'create-challenge');
+        createChallengeDiv.setAttribute('id', 'create-challenge');
 
         let color, isRanked;
         isRanked = true;
         const ranked = document.createElement('div');
         ranked.setAttribute('data-cy', 'ranked');
+        ranked.classList.add('selected');
         ranked.textContent = 'Ranked';
-        ranked.addEventListener('click', (e) => isRanked = true);
+        ranked.addEventListener('click', (e) => {
+            isRanked = true;
+            ranked.classList.add('selected');
+            unranked.classList.remove('selected');
+        });
 
         const unranked = document.createElement('div');
         unranked.textContent = 'Unranked';
         unranked.setAttribute('data-cy', 'unranked');
-        unranked.addEventListener('click', (e) => isRanked = false);
+        unranked.addEventListener('click', (e) => {
+            isRanked = false;
+            unranked.classList.add('selected');
+            ranked.classList.remove('selected');
+        });
 
         const black = document.createElement('div');
-        black.textContent = 'black';
+        black.textContent = 'Black';
         black.setAttribute('data-cy', 'black');
-        black.addEventListener('click', (e) => color = 'b');
+        black.addEventListener('click', (e) => {
+            color = 'b';
+            white.classList.remove('selected');
+            randomColor.classList.remove('selected');
+            black.classList.add('selected');
+        });
 
         const white = document.createElement('div');
-        white.textContent = 'white';
+        white.textContent = 'White';
         white.setAttribute('data-cy', 'white');
-        white.addEventListener('click', (e) => color = 'w');
+        white.addEventListener('click', (e) => {
+            color = 'w';
+            black.classList.remove('selected');
+            randomColor.classList.remove('selected');
+            white.classList.add('selected');
+        });
 
         const randomColor = document.createElement('div');
-        randomColor.textContent = 'random';
+        randomColor.textContent = 'Random';
         randomColor.setAttribute('data-cy', 'random');
-        randomColor.addEventListener('click', (e) => color = undefined);
+        randomColor.classList.add('selected');
+        randomColor.addEventListener('click', (e) => {
+            color = undefined;
+            black.classList.remove('selected');
+            white.classList.remove('selected');
+            randomColor.classList.add('selected');
+        });
 
         const close = document.createElement('div');
-        close.textContent = 'X';
+        close.textContent = 'Cancel';
         close.setAttribute('data-cy', 'close');
         close.addEventListener('click', (e) => {
             createChallengeDiv.remove();
+            document.getElementById('create-box').removeAttribute('data-visible');
         });
 
 
         const send = document.createElement('div');
         send.setAttribute('data-cy', 'send');
-        send.textContent = 'send challenge';
+        send.textContent = 'Send';
         send.addEventListener('click', (e) => {
             emittedEvents.createChallenge(document.getElementById('username').textContent, isRanked, color);
             createChallengeDiv.remove();
         });
         
-        createChallengeDiv.appendChild(close);
 
 
-        createChallengeDiv.appendChild(ranked);
-        createChallengeDiv.appendChild(unranked);
-        createChallengeDiv.appendChild(black);
-        createChallengeDiv.appendChild(randomColor);
-        createChallengeDiv.appendChild(white);
-        createChallengeDiv.appendChild(send);
+
+        const typeDiv = document.createElement('div');
+        typeDiv.setAttribute('id', 'challenge-type');
+        typeDiv.appendChild(ranked);
+        typeDiv.appendChild(unranked);
+
+        const colorDiv = document.createElement('div');
+        colorDiv.setAttribute('id', 'challenge-color');
+        colorDiv.appendChild(black);
+        colorDiv.appendChild(randomColor);
+        colorDiv.appendChild(white);
+
+
+        const sendOrCancelDiv = document.createElement('div');
+        sendOrCancelDiv.appendChild(send);
+        sendOrCancelDiv.appendChild(close);
+
+        createChallengeDiv.appendChild(typeDiv);
+        createChallengeDiv.appendChild(colorDiv);
+        createChallengeDiv.appendChild(sendOrCancelDiv);
 
         document.getElementById('create-box').appendChild(createChallengeDiv);
+        document.getElementById('create-box').setAttribute('data-visible', '');
 
         socket.on('challengeStart', ({gameId}) => {
             window.location = `/play/${gameId}`;

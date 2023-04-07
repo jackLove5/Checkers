@@ -31,6 +31,11 @@ class CheckersAi {
                         return [move, v];
                     }
 
+                    
+                    if (moveToReturn === null) {
+                        moveToReturn = move;
+                    }
+
                     if (v > a) {
                         a = v;
                         moveToReturn = move;
@@ -70,6 +75,9 @@ class CheckersAi {
                         return [move, v];
                     }
 
+                    if (moveToReturn === null) {
+                        moveToReturn = move;
+                    }
 
                     if (v < b) {
                         b = v;

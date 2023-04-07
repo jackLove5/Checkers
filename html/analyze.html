@@ -1,13 +1,13 @@
 <html>
     <head>
         <title>Checkers</title>
-        <link rel="stylesheet" href="/css/play-styles.css" />
+        <link rel="stylesheet" href="/css/analyze-styles.css" />
         <base href=".">
     </head>
 
     <body>
         <div class="nav-wrapper">
-            <button class="mobile-nav-toggle" data-cy="nav-toggle"></button>
+            <button class="mobile-nav-toggle"></button>
             <nav id="navbar" data-cy="navbar">
                 <ul id="nav-list"></ul>
             </nav>
@@ -16,15 +16,15 @@
             <div id="board-wrapper">
                 <checkers-board id="board" data-cy="board" color=""></checkers-board>
             </div>
-            <div id="info-box">
-                <div id="message" data-cy="message"></div>
-                <div id="buttons"></div>
+            <div id="eval"></div>
+            <div id="moves">
+                <div id="move-list" data-cy="moves"></div>
             </div>
             <div id="notifications" data-cy="notifications"></div>
-
         </main>
-
-        <script type="module" src="/playbundle.js"></script>
+        <script src="/socket.io.js"></script>
+        <script type="module" src="/analyze/bundle.js"></script>
 
     </body>
 </html>
+
