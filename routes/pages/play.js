@@ -4,8 +4,6 @@ const express = require('express')
 const router = express.Router();
 const fs = require('fs')
 const path = require('path');
-//const cheerio = require('cheerio');
-const {addMenuItems} = require('../../middleware/navbar');
 
 const play = async (req, res) => {
 
@@ -29,11 +27,10 @@ const play = async (req, res) => {
     }
 
 
-    res.send(fs.readFileSync(path.resolve(__dirname, '../../public/play.html'), {encoding: 'utf-8'}));
+    res.send(fs.readFileSync(path.resolve(__dirname, '../../html/play.html'), {encoding: 'utf-8'}));
 };
 
-//router.use(addMenuItems);
-router.route('/:id').get(play);
+router.route('/game/:id').get(play);
 
 
 module.exports = router

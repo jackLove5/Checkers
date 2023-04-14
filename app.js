@@ -37,9 +37,9 @@ fs.readdirSync(path.resolve(__dirname, './html')).forEach(filename => {
     app.use(`/${path}`, router);
 });
 
-app.use('/play', playRouter);
-
 app.use(express.static('./public'));
+
+app.use('/play', playRouter);
 
 
 

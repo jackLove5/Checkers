@@ -30,8 +30,6 @@ describe('Receive challenge', () => {
 
         cy.getByData('username').should('have.text', username);
         cy.getByData('game').should('have.length', 1);
-        cy.get('[data-cy="status"][data-status="online"]').should('exist');
-
 
     })
 

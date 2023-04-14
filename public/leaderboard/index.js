@@ -1,3 +1,5 @@
+import { registerChallengeHandlers, challengeSocketHandlers } from '/challenge.js';
+
 let socket = io.connect("/", {
     withCredentials: true
 });
@@ -21,53 +23,11 @@ const socketHandlers = {
     onOnlineUsers({usernames}) {
         onlineUsers = new Set(usernames);
         updateOnlineStatuses();
-    },
-    onChallengeStart({gameId}) {
-        window.location = `/play/${gameId}`;
-    },
-    
-    onChallengeRequest({challenge}) {
-    
-        const detail = `<p>${challenge.senderName} is challenging you</p>
-         <p>${challenge.isRanked ? 'Ranked' : 'Unranked'}</p>
-         <p>You play ${challenge.playerBlack === challenge.receiverName ? 'Black' : 'White'} pieces
-        `;
-    
-        const challengeDetail = document.createElement('p');
-        challengeDetail.innerHTML = detail;
-    
-        const challengeDiv = document.createElement('div');
-        challengeDiv.setAttribute('data-cy', 'challenge-request');
-    
-        const acceptChallenge = document.createElement('p');
-        acceptChallenge.setAttribute('data-cy', 'challenge-accept');
-        acceptChallenge.innerText = 'Accept';
-        acceptChallenge.addEventListener('click', (e) => {
-            emittedEvents.respondToChallenge(challenge._id, true);
-        });
-    
-        const rejectChallenge = document.createElement('p');
-        rejectChallenge.setAttribute('data-cy', 'challenge-reject');
-        rejectChallenge.innerText = 'Reject';
-        rejectChallenge.addEventListener('click', (e) => {
-            emittedEvents.respondToChallenge(challenge._id, false);
-            challengeDiv.remove();
-        });
-    
-        challengeDiv.appendChild(challengeDetail);
-        const respondDiv = document.createElement('div');
-        respondDiv.classList.add('response-options');
-        respondDiv.appendChild(acceptChallenge);
-        respondDiv.appendChild(rejectChallenge);
-
-        challengeDiv.appendChild(respondDiv);
-        document.getElementById('notifications').appendChild(challengeDiv);
     }
 };
 
 socket.on('onlineUsers', socketHandlers.onOnlineUsers);
-socket.on('challengeStart', socketHandlers.onChallengeStart);
-socket.on('challengeRequest', socketHandlers.onChallengeRequest);
+registerChallengeHandlers(socket);
 
 const api = {
     async getRankings(){
@@ -95,24 +55,6 @@ const displayRankings = async () => {
                       <td class="username"><div class="online"></div><a href="/profile?u=${uname}">${uname}</a></td>
                       <td class="rating" data-cy="rating">${user.rating}</td>`;
         playerRow.innerHTML = cols;
-        /*const playerDiv = document.createElement('div');
-        playerDiv.setAttribute('data-cy', 'player');
-        playerDiv.classList.add('player');
-        playerDiv.setAttribute('data-username', user.username);
-        const rank = document.createElement('div');
-        rank.setAttribute('data-cy', 'rank');
-        rank.textContent = `${i + 1}.`;
-        
-        const name = document.createElement('div');
-        name.innerHTML = `<a href="/profile?u=${user.username}">${user.username}</a>`;
-        
-        const rating = document.createElement('div');
-        rating.setAttribute('data-cy', 'rating');
-        rating.textContent = user.rating;
-
-        playerDiv.appendChild(rank);
-        playerDiv.appendChild(name);
-        playerDiv.append(rating);*/
 
         document.getElementById('player-list').appendChild(playerRow);
 

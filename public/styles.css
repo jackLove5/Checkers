@@ -1,16 +1,18 @@
 * {
     margin: 0;
     padding: 0;
+    box-sizing: border-box;
 }
 
 h1 {
     color: #228b22;
-    font-size: 3rem;
+    font-size: 3rem; 
 }
 
 body {
     background-color: #3f4a3c;
     font-family:'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+    color: #a2af9f;
 }
 .mobile-nav-toggle {
     display: block;
@@ -43,10 +45,6 @@ body {
     color: #228b22;
 
 }
-
-
-
-
 
 #create-box[data-visible] {
     display: block;

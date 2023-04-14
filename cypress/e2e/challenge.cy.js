@@ -31,7 +31,7 @@ describe('Receive challenge', () => {
             cy.get('@respondToChallenge').should('have.been.calledWith', challenge._id, true);
             cy.window().its('socketHandlers').invoke('onChallengeStart', {gameId: 'abc'});
             cy.location().should((loc) => {
-                expect(loc.pathname).to.eq('/play/abc');
+                expect(loc.pathname).to.eq('/play/game/abc');
             })
         })
     });

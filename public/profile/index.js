@@ -1,73 +1,18 @@
+import { registerChallengeHandlers, challengeSocketHandlers } from '/challenge.js';
 
 let socket = io.connect("/", {
     withCredentials: true
 });
-
 
 let onlineUsers = new Set();
 
 const emittedEvents = {
     createChallenge: (receiverName, isRanked, color) => {
         socket.emit('createChallenge', {receiverName, isRanked, color});
-
     }
 }
 
 const socketHandlers = {
-    onChallengeStart({gameId}) {
-        window.location = `/play/${gameId}`;
-    },
-    
-    onChallengeRequest({challenge}) {
-    
-        const detail = `<p>${challenge.senderName} is challenging you</p>
-         <p>${challenge.isRanked ? 'Ranked' : 'Unranked'}</p>
-         <p>You play ${challenge.playerBlack === challenge.receiverName ? 'Black' : 'White'} pieces
-        `;
-    
-        const challengeDetail = document.createElement('p');
-        challengeDetail.innerHTML = detail;
-    
-        const challengeDiv = document.createElement('div');
-        challengeDiv.setAttribute('data-cy', 'challenge-request');
-    
-        const acceptChallenge = document.createElement('p');
-        acceptChallenge.setAttribute('data-cy', 'challenge-accept');
-        acceptChallenge.innerText = 'Accept';
-        acceptChallenge.addEventListener('click', (e) => {
-            emittedEvents.respondToChallenge(challenge._id, true);
-        });
-    
-        const rejectChallenge = document.createElement('p');
-        rejectChallenge.setAttribute('data-cy', 'challenge-reject');
-        rejectChallenge.innerText = 'Reject';
-        rejectChallenge.addEventListener('click', (e) => {
-            emittedEvents.respondToChallenge(challenge._id, false);
-            challengeDiv.remove();
-        });
-    
-        challengeDiv.appendChild(challengeDetail);
-        const respondDiv = document.createElement('div');
-        respondDiv.classList.add('response-options');
-        respondDiv.appendChild(acceptChallenge);
-        respondDiv.appendChild(rejectChallenge);
-
-        challengeDiv.appendChild(respondDiv);
-        document.getElementById('notifications').appendChild(challengeDiv);
-    },
-    onChallengeRejected() {
-        const detail = `<p>Challenge rejected</p>`;
-
-        const challengeDetail = document.createElement('p');
-        challengeDetail.innerHTML = detail;
-
-        const challengeDiv = document.createElement('div');
-        challengeDiv.setAttribute('data-cy', 'challenge-reject');
-
-
-        challengeDiv.appendChild(challengeDetail);
-        document.getElementById('notifications').appendChild(challengeDiv);
-    },
     onOnlineUsers({usernames}) {
         onlineUsers = new Set(usernames);
 
@@ -81,14 +26,13 @@ const socketHandlers = {
     }
 }
 
-socket.on('challengeStart', socketHandlers.onChallengeStart);
-socket.on('challengeRejected', socketHandlers.onChallengeRejected);
 socket.on('onlineUsers', socketHandlers.onOnlineUsers);
-socket.on('challengeRequest', socketHandlers.onChallengeRequest);
+registerChallengeHandlers(socket);
 
 if (window.Cypress) {
     window.emittedEvents = emittedEvents;
     window.socketHandlers = socketHandlers;
+    window.challengeSocketHandlers = challengeSocketHandlers;
 }
 window.addEventListener('load', async (e) => {
 
@@ -244,9 +188,5 @@ window.addEventListener('load', async (e) => {
 
         document.getElementById('create-box').appendChild(createChallengeDiv);
         document.getElementById('create-box').setAttribute('data-visible', '');
-
-        socket.on('challengeStart', ({gameId}) => {
-            window.location = `/play/${gameId}`;
-        });
     });
 })
