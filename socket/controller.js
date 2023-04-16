@@ -139,19 +139,19 @@ const joinGame = (socket, io) => async ({id, color}) => {
             }
 
             const username = socket.handshake.session.username;
+            if (color !== 'b' && color !== 'w') {
+                color = chance.bool() ? 'b' : 'w';
+            }
             if (username) {
                 if (game.playerBlack === username || game.playerWhite === username) {
                     color = game.playerBlack === username ? 'b' : 'w';
                 } else {
-                    color = chance.bool() ? 'b' : 'w';
                     if (color === 'b') {
                         await Game.updateOne({_id: id}, {playerBlack: username});
                     } else {
                         await Game.updateOne({_id: id}, {playerWhite: username});
                     }
                 }
-            } else {
-                color = chance.bool() ? 'b' : 'w';
             }
 
             socket.handshake.session.games[id] = {color};
@@ -283,7 +283,7 @@ const makeMove = (socket, io) => async ({move, id}) => {
         const move = JSON.parse(moveJSON);
         const [src, dst] = move.shortNotation.split(/x|-/);
         game.doMove(src, dst, move.longNotation);
-    })
+    });
 
     socket.handshake.session.reload(async (err) => {
         if (err) {

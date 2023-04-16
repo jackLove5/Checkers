@@ -14,7 +14,6 @@ const challengeSocketHandlers = {
     },
     
     onChallengeRequest({challenge}) {
-        console.log('in onChallengeRequest');
         const detail = `<p>${challenge.senderName} is challenging you</p>
          <p>${challenge.isRanked ? 'Ranked' : 'Unranked'}</p>
          <p>You play ${challenge.playerBlack === challenge.receiverName ? 'Black' : 'White'} pieces
