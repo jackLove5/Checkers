@@ -9,7 +9,6 @@ describe('Receive challenge', () => {
 
     it('Register new account, play game, game should appear on profile page, and user should be online', () => {
         
-        cy.getByData('nav-toggle').click();
         cy.getByData('signin').click();
         cy.getByData('register').find('a').click();
 
@@ -25,7 +24,6 @@ describe('Receive challenge', () => {
 
         cy.getByData('resign').click();
 
-        cy.getByData('nav-toggle').click();
         cy.getByData('profile').click();
 
         cy.getByData('username').should('have.text', username);

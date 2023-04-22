@@ -92,7 +92,7 @@ describe('send challenge', () => {
                 cy.stub(win.emittedEvents, 'createChallenge', () => {}).as('createChallenge');
 
 
-                cy.getByData('challenge').click();
+                cy.getByData('challenge').click({force: true});
     
 
                 cy.getByData('black').click();

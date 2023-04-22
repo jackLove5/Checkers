@@ -46,3 +46,35 @@ main {
 #eval {
     padding-bottom: 1rem;
 }
+
+#analysis-wrapper {
+    display: flex;
+    flex-direction: column;
+}
+
+.clickable {
+    cursor: pointer;
+}
+
+@media(min-width: 40em) {
+    #board-wrapper {
+        width: 35%;
+        margin: 1rem;
+    }
+
+    main {
+        flex-direction: row;
+    }
+
+    #analysis-wrapper {
+        padding: 1rem;
+        width: 30%;
+        margin-bottom: auto;
+        gap: 0.25rem;
+    }
+
+    #move-list {
+        max-height: 25rem;
+    }
+
+}

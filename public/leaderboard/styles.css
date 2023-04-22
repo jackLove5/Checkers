@@ -25,6 +25,7 @@ th {
 }
 tr {
     border: 1px solid black;
+    line-height: 1.5rem;
 }
 td {
     border: 1px solid black;
@@ -55,4 +56,14 @@ td {
 
 thead th {
     padding: 0.25rem;
+}
+
+@media(min-width: 40em) {
+    main {
+        margin-top: 0;
+    }
+
+    #player-table {
+        width: 30%;
+    }
 }

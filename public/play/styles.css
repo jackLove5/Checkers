@@ -42,3 +42,16 @@ main {
 #message[data-visible] {
     display: block;
 }
+
+@media(min-width: 40em) {
+    #board-wrapper {
+        width: 35%;
+        margin: 1rem;
+    }
+
+    main {
+        flex-direction: row;
+    }
+
+
+}

@@ -448,11 +448,16 @@ const claimWin = (socket, io) => async ({id}) => {
             return socket.disconnect();
         }
 
+        if (!socket.handshake.session.games[id]) {
+            io.to(id).emit('badRequest', {});
+            return;
+        }
+
         const color = socket.handshake.session.games[id].color;
 
         const game = await Game.findById(id);
 
-        if (game && game.disconnectTime && Date.now() - parseInt(game.disconnectTime) >= 10000) {
+        if (game && game.gameState === 'in_progress' && game.disconnectTime && Date.now() - parseInt(game.disconnectTime) >= 10000) {
             await stopGameAndNotify(io, id, color, 'Claimed win');
         } else {
             io.to(id).emit('badRequest', {});
@@ -466,9 +471,14 @@ const callDraw = (socket, io) => async ({id}) => {
             return socket.disconnect();
         }
 
+        if (!socket.handshake.session.games[id]) {
+            io.to(id).emit('badRequest', {});
+            return;
+        }
+
         const game = await Game.findById(id);
 
-        if (game && game.disconnectTime && Date.now() - parseInt(game.disconnectTime) >= 10000) {
+        if (game && game.gameState === 'in_progress' && game.disconnectTime && Date.now() - parseInt(game.disconnectTime) >= 10000) {
             await stopGameAndNotify(io, id, 'd', 'Called draw');
         } else {
             io.to(id).emit('badRequest', {});

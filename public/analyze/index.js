@@ -68,6 +68,7 @@ window.addEventListener('load', async (e) => {
         moveNode.setAttribute('data-cy', `move-${i}`);
         
         moveNode.innerText = states[i].moveText;
+        moveNode.classList.add('clickable');
         moveNode.addEventListener('click', (e) => {
 
             if (states[i].bestMove === '') {
@@ -86,6 +87,8 @@ window.addEventListener('load', async (e) => {
 
             e.target.classList.add('selected-move');
 
+            board.lastMove = [states[i].moveText.split(/x|-/)[0], states[i].moveText.split(/x|-/).at(-1)];
+            board.bestMove = states[i].bestMove.shortNotation.split(/x|-/);
             board.setBoardFromFen(states[i].fen);
             board.drawBoard();
 
@@ -99,4 +102,6 @@ window.addEventListener('load', async (e) => {
     if (firstMove) {
         firstMove.click();
     }
+
+    board.toggleNumbers();
 });

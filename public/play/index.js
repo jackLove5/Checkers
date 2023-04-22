@@ -95,6 +95,7 @@ const socketHandlers = {
         showDefaultButtons();
 
         let board = document.querySelector('#board');
+        board.lastMove = completedMoves.at(-1).shortNotation.split(/x|-/);
         board.setBoardFromFen(fen);
         options = moveOptions;
     },
@@ -164,6 +165,11 @@ const socketHandlers = {
     },
 
     onPlayerDisconnect({}) {
+        const board = document.getElementById('board');
+        if (board.isLocked) {
+            return;
+        }
+
         timeouts = [];
         for (let i = 0; i < 10; i++) {
             timeouts.push(setTimeout(() => setInfoMessage(`Opponent left the game. You can claim a win in ${10 - i} seconds...`), 1000 * i));

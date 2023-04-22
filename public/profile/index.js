@@ -23,6 +23,10 @@ const socketHandlers = {
         statusDiv.setAttribute('data-status', isOnline ? 'online' : 'offline');
         statusDiv.textContent = statusDiv.getAttribute('data-status');
         document.querySelector('body').appendChild(statusDiv);
+
+        const userLoggedIn = document.getElementById('profile') ? document.getElementById('profile').textContent : '';
+        const displayButton = userLoggedIn && username !== userLoggedIn && isOnline;
+        document.getElementById('challenge').toggleAttribute('is-visible', displayButton)
     }
 }
 
@@ -72,8 +76,19 @@ window.addEventListener('load', async (e) => {
         const gameDiv = document.createElement('div');
         gameDiv.classList.add('game');
         gameDiv.setAttribute('data-cy', 'game');
-        const playerBlackLink = game.playerBlack === 'Computer' ? 'Computer' : `<a href="/profile?u=${game.playerBlack}">${game.playerBlack}</a>`;
-        const playerWhiteLink = game.playerWhite === 'Computer' ? 'Computer' : `<a href="/profile?u=${game.playerWhite}">${game.playerWhite}</a>`;
+        let playerBlackLink, playerWhiteLink;
+        if (game.playerBlack === 'Computer' || game.playerBlack === 'Guest') {
+            playerBlackLink = game.playerBlack;
+        } else {
+            playerBlackLink = `<a href="/profile?u=${game.playerBlack}">${game.playerBlack}</a>`;
+        }
+
+        if (game.playerWhite === 'Computer' || game.playerWhite === 'Guest') {
+            playerWhiteLink = game.playerWhite;
+        } else {
+            playerWhiteLink = `<a href="/profile?u=${game.playerWhite}">${game.playerWhite}</a>`;
+        }
+        
         const html = `<div class="versus">${playerBlackLink} vs ${playerWhiteLink}</div>
                       <div class="type">${game.isRanked ? 'Ranked' : 'Unranked'}</div>
                       <div class="result"> ${game.result === 'd' ? 'Draw' : (game.result === 'b' ? game.playerBlack : game.playerWhite) + " Wins"}</div>`;
@@ -90,6 +105,10 @@ window.addEventListener('load', async (e) => {
     const challengeButton = document.getElementById('challenge');
 
     challengeButton.addEventListener('click', (e) => {
+        if (document.getElementById('create-challenge')) {
+            return;
+        }
+
         const createChallengeDiv = document.createElement('div');
         createChallengeDiv.setAttribute('data-cy', 'create-challenge');
         createChallengeDiv.setAttribute('id', 'create-challenge');
@@ -161,6 +180,7 @@ window.addEventListener('load', async (e) => {
         send.addEventListener('click', (e) => {
             emittedEvents.createChallenge(document.getElementById('username').textContent, isRanked, color);
             createChallengeDiv.remove();
+            document.getElementById('create-box').removeAttribute('data-visible');
         });
         
 

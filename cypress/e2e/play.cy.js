@@ -88,7 +88,11 @@ describe('Player vs Player', () => {
         cy.getByData('square-15').find('[data-cy~="piece"][data-cy~="black"]');
         
   
-        cy.window().its('socketHandlers').invoke('onMove', {fen: 'B:W32,31,30,29,28,27,26,25,23,22,21,19:B15,12,10,9,8,7,6,5,4,3,2,1'})
+        cy.window().its('socketHandlers').invoke('onMove', {
+          fen: 'B:W32,31,30,29,28,27,26,25,23,22,21,19:B15,12,10,9,8,7,6,5,4,3,2,1',
+          completedMoves: [{shortNotation: "11-15"}]
+        });
+
         cy.getByData('square-19').find('[data-cy~=piece]').get('[data-cy~=white]');
   
         cy.reload();
@@ -113,7 +117,11 @@ describe('Player vs Player', () => {
         cy.getByData('square-15').find('[data-cy~="piece"][data-cy~="black"]');
         
   
-        cy.window().its('socketHandlers').invoke('onMove', {fen: 'B:W32,31,30,29,28,27,26,25,23,22,21,19:B15,12,10,9,8,7,6,5,4,3,2,1'})
+        cy.window().its('socketHandlers').invoke('onMove', {
+          fen: 'B:W32,31,30,29,28,27,26,25,23,22,21,19:B15,12,10,9,8,7,6,5,4,3,2,1',
+          completedMoves: [{shortNotation: "11-15"}]
+        });
+
         cy.getByData('square-19').find('[data-cy~=piece][data-cy~=white]');
       });
 
@@ -126,7 +134,11 @@ describe('Player vs Player', () => {
         cy.get('[data-cy~=highlight]').should('not.exist');
 
 
-        cy.window().its('socketHandlers').invoke('onMove', {fen: 'W:W32,31,30,29,28,27,26,25,24,23,22,21:B15,12,10,9,8,7,6,5,4,3,2,1', moveOptions: []})
+        cy.window().its('socketHandlers').invoke('onMove', {
+          fen: 'W:W32,31,30,29,28,27,26,25,24,23,22,21:B15,12,10,9,8,7,6,5,4,3,2,1',
+          moveOptions: [],
+          completedMoves: [{shortNotation: "11-15"}]
+        });
 
 
         cy.getByData('square-23').click();

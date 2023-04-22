@@ -48,11 +48,19 @@ class CheckersBoard extends HTMLElement{
         this.color = color;
 
         this.isLocked = false;
+        this.showNumbers = false;
+        this.lastMove = [];
+        this.bestMove = [];
         let div = document.createElement("div");
         this.createDiv(div);
 
         this.drawBoard();
         this.game.start();
+    }
+
+    toggleNumbers() {
+        this.showNumbers = !this.showNumbers;
+        this.drawBoard();
     }
 
     getFen() {
@@ -76,7 +84,12 @@ class CheckersBoard extends HTMLElement{
     drawBoard() {
         for (let i = 1; i <= 32; i++) {
             const squareDiv = this.shadowRoot.querySelector(`[data-pos="${i}"]`);
-            const pieceDiv = squareDiv.firstChild;
+            squareDiv.classList.toggle('last-move', this.lastMove.includes(`${i}`));
+            squareDiv.classList.toggle('best-move', this.bestMove.includes(`${i}`));
+            const positionDiv = squareDiv.firstChild;
+
+            positionDiv.classList.toggle('is-visible', this.showNumbers);
+            const pieceDiv = squareDiv.children[1];
             pieceDiv.classList.remove(...pieceDiv.classList);
             pieceDiv.setAttribute('data-cy', '');
 
@@ -99,8 +112,13 @@ class CheckersBoard extends HTMLElement{
         for (let row = 0; row < 8; row++) {
             for (let col = 0; col < 8; col++) {
                 const squareDiv = document.createElement("div");
+                const positionDiv = document.createElement("div");
+                positionDiv.classList.add('number');
+                positionDiv.classList.toggle('is-visible', this.showNumbers);
                 if (row % 2 !== col % 2) {
                     const pos = this.color === CheckersGame.PLAYER_WHITE ? pieceCount + 1 : 32 - pieceCount;
+                    positionDiv.textContent = pos;
+                    squareDiv.appendChild(positionDiv);
                     pieceCount++;
                     squareDiv.setAttribute("data-pos", pos);
                     squareDiv.setAttribute("data-cy", `square-${pos}`)
@@ -135,7 +153,7 @@ class CheckersBoard extends HTMLElement{
     clickSquare(position) {
 
         for (let i = 1; i <= 32; i++) {
-            const squareDiv = this.shadowRoot.querySelector(`[data-pos="${i}"]`).firstChild;
+            const squareDiv = this.shadowRoot.querySelector(`[data-pos="${i}"]`).children[1];
             squareDiv.classList.remove("highlight");
             squareDiv.setAttribute('data-cy', squareDiv.getAttribute('data-cy').replace('highlight', ''));
 
@@ -167,6 +185,8 @@ class CheckersBoard extends HTMLElement{
                         this.game.doMove(origin, dst);
                         moveText = this.moveOptionsPtr.move.shortNotation;
                     }
+
+                    this.lastMove = [origin, dst];
 
                     const moveEvent = new CustomEvent('move', { 
                         bubbles: true,
@@ -208,7 +228,7 @@ class CheckersBoard extends HTMLElement{
         }
 
         destinationSquares.forEach(ds => {
-            const squareDiv = this.shadowRoot.querySelector(`[data-pos="${ds}"]`).firstChild;
+            const squareDiv = this.shadowRoot.querySelector(`[data-pos="${ds}"]`).children[1];
             squareDiv.classList.add("highlight");
             squareDiv.setAttribute('data-cy', squareDiv.getAttribute('data-cy') + " highlight");
         });

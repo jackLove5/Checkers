@@ -1084,7 +1084,7 @@ describe('disconnect', () => {
 });
 
 describe('createChallenge', () => {
-    it('should emit badRequest if user is not logged in', (done) => {
+    it('should emit badRequest if issuer is not logged in', (done) => {
         player1Socket.emit('createChallenge', {receiverName: 'player2Name', isRanked: false, color : 'b'});
         player1Socket.on('badRequest', () => {
             done();
