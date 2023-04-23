@@ -9,6 +9,9 @@ const io = require('socket.io-client')
 const setupSocketServer = require('../socket/setup')
 
 const Game = require('../models/game')
+const User = require('../models/user')
+const Chance = require('chance');
+const chance = new Chance();
 const Challenge = require('../models/challenge')
 const connectDB = require('../db/connect')
 require('dotenv').config();
@@ -1185,7 +1188,7 @@ describe('respondToChallenge', () => {
 
             player2Socket.disconnect();
             ioServer.once('connect', (socket) => {
-                socket.handshake.session.username = 'player2Name'
+                socket.handshake.session.username = 'player2Name';
                 socket.join('player2Name');
                 player1Socket.emit('createChallenge', {receiverName: 'player2Name', isRanked: false, color : 'b'});
             });
@@ -1407,3 +1410,42 @@ describe('respondToChallenge', () => {
         });
     });
 });
+
+describe('rating change', () => {
+    it('should update ratings when ranked game ends', (done) => {
+
+        const playerBlack = {
+            username: chance.word({length: 10}),
+            password: chance.word({length: 60}),
+        };
+
+        const playerWhite = {
+            username: chance.word({length: 10}),
+            password: chance.word({length: 60}),
+        };
+
+        User.create(playerBlack).then(playerBlack => {
+            User.create(playerWhite).then(playerWhite => {
+                Game.create({isRanked: true, vsCpu: false, playerBlack: playerBlack.username, playerWhite: playerWhite.username}).then(game => {
+                    const id = game._id;
+                    const ranked = game.isRanked;
+                    player1Socket.emit('joinGame', {id, color: 'b'});
+                    player2Socket.emit('joinGame', {id, color: 'w'});
+
+                    player2Socket.on('startGame', () => {
+                        player2Socket.emit('resign', {id});
+                        player1Socket.on('gameOver', () => {
+                            User.findById(playerBlack._id).then(playerBlack => {
+                                expect(playerBlack.rating).toBeGreaterThan(1000);
+                                User.findById(playerWhite._id).then(playerWhite => {
+                                    expect(playerWhite.rating).toBeLessThan(1000);
+                                    done();
+                                })
+                            });
+                        })
+                    });
+                })
+            })
+        })
+    })
+})

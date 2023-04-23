@@ -2,6 +2,7 @@ body {
     color: #a2af9f;
     text-align: center;
 }
+
 h1 {
     color: #a2af9f;
 }
@@ -17,9 +18,10 @@ main {
     flex-direction: column;
     gap: 1rem;
 }
+
 .game{
     display: block;
-    padding-inline: 3rem;
+    padding-inline: 1rem;
     padding-block: 1rem;
 }
 
@@ -52,7 +54,6 @@ header {
     background-color: #7a9972;
     cursor: pointer;
     color: #EDF4EB;
-    font-size: 1.25rem;
 
 }
 
@@ -93,6 +94,12 @@ a:hover {
 
     #game-section {
         width: 40%;
+    }
+
+    .game{
+        display: block;
+        padding-inline: 3rem;
+        padding-block: 1rem;
     }
 }
 

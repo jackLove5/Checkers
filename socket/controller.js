@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const Game = mongoose.model('Game');
+const User = mongoose.model('User');
 const Challenge = mongoose.model('Challenge');
 const CheckersGame = require('../public/CheckersGame');
 const CheckersAi = require('../public/CheckersAi')
@@ -96,12 +97,16 @@ const joinGame = (socket, io) => async ({id, color}) => {
         const cpuColor = playerColor === 'b' ? 'w' : 'b';
 
         const playerUsername = socket.handshake.session.username || 'Guest';
+        const user = User.findOne({username: playerUsername});
+        const playerRating = user ? user.rating : 0;
 
         try {
             await Game.updateOne({_id: id}, {
                 gameState: 'in_progress',
-                playerBlack: cpuColor == 'b' ? 'Computer' : playerUsername,
-                playerWhite: cpuColor === 'w' ? 'Computer' : playerUsername
+                playerBlack: cpuColor === 'b' ? 'Computer' : playerUsername,
+                playerWhite: cpuColor === 'w' ? 'Computer' : playerUsername,
+                playerBlackRating: cpuColor === 'b' ? 0 : playerRating,
+                playerWhiteRating: cpuColor === 'w' ? 0 : playerRating
             });
         } catch (error) {
             io.to(socket.id).emit('serverError');
@@ -146,10 +151,11 @@ const joinGame = (socket, io) => async ({id, color}) => {
                 if (game.playerBlack === username || game.playerWhite === username) {
                     color = game.playerBlack === username ? 'b' : 'w';
                 } else {
+                    const user = await User.findOne({username});
                     if (color === 'b') {
-                        await Game.updateOne({_id: id}, {playerBlack: username});
+                        await Game.updateOne({_id: id}, {playerBlack: username, playerBlackRating: user ? user.rating : 0});
                     } else {
-                        await Game.updateOne({_id: id}, {playerWhite: username});
+                        await Game.updateOne({_id: id}, {playerWhite: username, playerWhiteRating: user ? user.rating : 0});
                     }
                 }
             }
@@ -186,10 +192,11 @@ const joinGame = (socket, io) => async ({id, color}) => {
                 const p2Username = socket.handshake.session.username;
                 const p2Color = p1Color === 'b' ? 'w' : 'b';
                 if (p2Username) {
+                    const p2User = await User.findOne({username: p2Username});
                     if (p2Color === 'b') {
-                        await Game.updateOne({_id: id}, {playerBlack: p2Username});
+                        await Game.updateOne({_id: id}, {playerBlack: p2Username, playerBlackRating: p2User ? p2User.rating : 0});
                     } else {
-                        await Game.updateOne({_id: id}, {playerWhite: p2Username});
+                        await Game.updateOne({_id: id}, {playerWhite: p2Username, playerWhiteRating: p2User ? p2User.rating : 0});
                     }
                 }
 
@@ -255,10 +262,50 @@ const executeMoveAndNotify = async (io, move, game, gameId) => {
     }
 }
 
+const updateRatings = async (game) => {
+    const playerBlack = await User.findOne({username: game.playerBlack});
+    const playerWhite = await User.findOne({username: game.playerWhite});
+
+    if (!playerBlack || !playerWhite) {
+        return;
+    }
+
+    const pBlack = (1.0 / (1.0 + Math.pow(10, ((playerWhite.rating - playerBlack.rating) / 400))));
+    const pWhite = (1.0 / (1.0 + Math.pow(10, ((playerBlack.rating - playerWhite.rating) / 400))));
+    const k = 20;
+
+    let blackResult, whiteResult;
+    if (game.result === 'b') {
+        blackResult = 1;
+        whiteResult = 0;
+    } else if (game.result === 'w') {
+        blackResult = 0;
+        whiteResult = 1;
+    } else {
+        blackResult = 0.5;
+        whiteResult = 0.5;
+    }
+
+    const blackRating = Math.round(playerBlack.rating + k * (blackResult - pBlack));
+    const whiteRating = Math.round(playerWhite.rating + k * (whiteResult - pWhite));
+
+    await User.updateOne({_id: playerBlack._id}, {rating: blackRating});
+    await User.updateOne({_id: playerWhite._id}, {rating: whiteRating});
+}
 const stopGameAndNotify = async (io, gameId, result, reason) => {
     try {
-        await Game.updateOne({_id: gameId}, {result, reason, gameState: 'completed'});
+        let game = await Game.findById(gameId);
+        if (!game || game.gameState !== 'in_progress')  {
+            return;
+        }
+
+        game = await Game.findOneAndUpdate({_id: gameId}, {result, reason, gameState: 'completed'}, {new: true});
+        if (game.isRanked) {
+            await updateRatings(game);
+        }
         io.in(gameId).emit('gameOver', {gameId, result, reason});
+
+
     } catch (err) {
         throw err;
     }
@@ -576,11 +623,15 @@ const respondToChallenge = (socket, io) => async ({challengeId, accept}) => {
     if (accept) {
         let newGame;
         try {
+            const playerBlackUser = await User.findOne({username: challenge.playerBlack});
+            const playerWhiteUser = await User.findOne({username: challenge.playerWhite});
             newGame = await Game.create({
                 isRanked: challenge.isRanked,
                 vsCpu: false,
                 playerBlack: challenge.playerBlack,
                 playerWhite: challenge.playerWhite,
+                playerBlackRating: playerBlackUser ? playerBlackUser.rating : 0,
+                playerWhiteRating: playerWhiteUser ? playerWhiteUser.rating : 0
             });
         } catch (err) {
             return;

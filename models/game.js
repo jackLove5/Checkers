@@ -25,6 +25,14 @@ const gameSchema = new mongoose.Schema({
         maxLength: [30, 'playerWhite length must not exceed 30 characters'],
     },
 
+    playerBlackRating: {
+        type: Number
+    },
+
+    playerWhiteRating: {
+        type: Number
+    },
+
     gameState: {
         type: String,
         enum: {

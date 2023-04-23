@@ -76,20 +76,20 @@ window.addEventListener('load', async (e) => {
         const gameDiv = document.createElement('div');
         gameDiv.classList.add('game');
         gameDiv.setAttribute('data-cy', 'game');
-        let playerBlackLink, playerWhiteLink;
+        let playerBlackProfile, playerWhiteProfile;
         if (game.playerBlack === 'Computer' || game.playerBlack === 'Guest') {
-            playerBlackLink = game.playerBlack;
+            playerBlackProfile = game.playerBlack;
         } else {
-            playerBlackLink = `<a href="/profile?u=${game.playerBlack}">${game.playerBlack}</a>`;
+            playerBlackProfile = `<a href="/profile?u=${game.playerBlack}">${game.playerBlack}</a> (${game.playerBlackRating})`;
         }
 
         if (game.playerWhite === 'Computer' || game.playerWhite === 'Guest') {
-            playerWhiteLink = game.playerWhite;
+            playerWhiteProfile = game.playerWhite;
         } else {
-            playerWhiteLink = `<a href="/profile?u=${game.playerWhite}">${game.playerWhite}</a>`;
+            playerWhiteProfile= `<a href="/profile?u=${game.playerWhite}">${game.playerWhite}</a> (${game.playerWhiteRating})`;
         }
         
-        const html = `<div class="versus">${playerBlackLink} vs ${playerWhiteLink}</div>
+        const html = `<div class="versus">${playerBlackProfile} vs ${playerWhiteProfile}</div>
                       <div class="type">${game.isRanked ? 'Ranked' : 'Unranked'}</div>
                       <div class="result"> ${game.result === 'd' ? 'Draw' : (game.result === 'b' ? game.playerBlack : game.playerWhite) + " Wins"}</div>`;
 
