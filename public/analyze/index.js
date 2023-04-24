@@ -73,13 +73,28 @@ window.addEventListener('load', async (e) => {
 
             if (states[i].bestMove === '') {
                 analyzeGame.constructFromFen(i === 0 ? initialFen : states[i - 1].fen);
-                const [bestMove, evaluation] = ai.getNextMove();
+                let [bestMove, evaluation] = ai.getNextMove();
                 if (bestMove) {
                     states[i].bestMove = bestMove;
                 }
 
+                if (i > 0) {
+                    states[i - 1].evaluation = evaluation;
+                }
+
+            }
+
+            if (states[i].evaluation === '') {
+                analyzeGame.constructFromFen(states[i].fen);
+                let [bestMove, evaluation] = ai.getNextMove();
+
+                if (bestMove && i < states.length) {
+                    states[i + 1].bestMove = bestMove;
+                }
+
                 states[i].evaluation = evaluation;
             }
+
             const selectedMove = document.querySelector('#move-list .selected-move');
             if (selectedMove) {
                 selectedMove.classList.remove('selected-move');
