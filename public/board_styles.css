@@ -27,6 +27,9 @@
     height: 90%;
     width: 90%;
     border-radius: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 .white {
@@ -35,10 +38,6 @@
 
 .black {
     background-color: black;
-}
-
-.king {
-    background-color: red;
 }
 
 .highlight {
@@ -77,4 +76,10 @@
 
 .best-move {
     background-color: #6e962b;
+}
+
+
+.piece > img {
+    width: 75%;
+    height: 75%;
 }

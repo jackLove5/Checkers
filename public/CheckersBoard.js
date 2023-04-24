@@ -103,6 +103,14 @@ class CheckersBoard extends HTMLElement{
                 pieceDiv.classList.toggle("king", piece.isKing);
                 dataCy += piece.isKing ? " king" : "";
                 pieceDiv.setAttribute('data-cy', dataCy);
+
+                if (piece.isKing && !pieceDiv.querySelector('img')) {
+                    const crownImg = document.createElement('img');
+                    crownImg.setAttribute('src', `/images/crown-${piece.color === CheckersGame.PLAYER_BLACK ? 'white' : 'black'}.png`);
+                    pieceDiv.appendChild(crownImg);
+                }
+            } else {
+                pieceDiv.innerHTML = '';
             }
         }
     }
@@ -132,6 +140,7 @@ class CheckersBoard extends HTMLElement{
                     pieceDiv.draggable = true;
                     pieceDiv.ondragstart = function() { squareDiv.click() }
                     pieceDiv.ondrag = function(e) {e.preventDefault();}
+
                     squareDiv.appendChild(pieceDiv);
                 }
 
