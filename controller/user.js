@@ -5,17 +5,16 @@ const bcrypt = require('bcrypt')
 const createUser = async (req, res) => {
 
     if (typeof req.body.username !== 'string' || typeof req.body.password !== 'string') {
-        res.status(400).send('');
         return;
     }
 
     if (!req.body.username.match(/^[a-zA-Z0-9_-]{3,30}$/)) {
-        res.status(400).send('');
+        res.status(400).send('Username must be between 3 and 30 characters and consist of only letters, numbers, hyphens, and dashes');
         return;
     }
 
     if (req.body.password.length < 8 || req.body.password.length > 50) {
-        res.status(400).send('');
+        res.status(400).send('Password must be between 8 and 50 characters');
         return;
     }
 
@@ -32,14 +31,12 @@ const createUser = async (req, res) => {
                 password: passwordHash
             });
         } catch (err) {
-            let statusCode;
             if (err && err.name === "MongoServerError" && err.code === 11000) {
-                statusCode = 400;
+                res.status(400).send('User already exists');
             } else {
-                statusCode = 500;
+                res.status(500).send('');
             }
 
-            res.status(statusCode).send('');
             return;
         }
 
@@ -77,10 +74,10 @@ const authenticateUser = async (req, res) => {
             req.session.username = user.username;
             req.session.save();
         } else {
-            res.status(401).send('');
+            res.status(401).send('Invalid username or password');
         }
     } else {
-        res.status(401).send('');
+        res.status(401).send('Invalid username or password');
     }
 }
 

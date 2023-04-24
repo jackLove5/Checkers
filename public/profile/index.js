@@ -72,7 +72,7 @@ window.addEventListener('load', async (e) => {
 
     const gamesResJson = await gamesRes.json();
 
-    gamesResJson.games.filter(game => game.gameState === 'completed').forEach(game => {
+    gamesResJson.games.filter(game => game.gameState === 'completed').sort((a, b) => a._id < b._id ? 1 : -1).forEach(game => {
         const gameDiv = document.createElement('div');
         gameDiv.classList.add('game');
         gameDiv.setAttribute('data-cy', 'game');

@@ -40,6 +40,10 @@ input[type="password"] {
     min-height: 2rem;
 }
 
+#error-message {
+    color: red;
+}
+
 @media(min-width: 40em) {
     form {
         width: 33%;

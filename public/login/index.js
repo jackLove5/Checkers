@@ -25,7 +25,12 @@ window.addEventListener('load', (e) => {
         if (res.status === 200) {
             window.location = `/`
         } else {
-            alert('error');
+            const body = await res.text();
+            if (body) {
+                document.getElementById('error-message').textContent = body;
+            } else {
+                alert('error');
+            }
         }
     })
 })

@@ -97,7 +97,7 @@ const joinGame = (socket, io) => async ({id, color}) => {
         const cpuColor = playerColor === 'b' ? 'w' : 'b';
 
         const playerUsername = socket.handshake.session.username || 'Guest';
-        const user = User.findOne({username: playerUsername});
+        const user = await User.findOne({username: playerUsername});
         const playerRating = user ? user.rating : 0;
 
         try {

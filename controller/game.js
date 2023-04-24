@@ -1,21 +1,4 @@
 const Game = require('../models/Game')
-//const Challenge = require('../models/Challenge')
-
-/*
-    createGameVsCpu() don't require auth
-
-    request:
-    {
-        isRanked: true/ false
-        vsCpu: true/false
-    }
-
-
-    response:
-    {
-        gameId:
-    }
-*/
 
 const createGame = async (req, res) => {
 
@@ -41,27 +24,6 @@ const createGame = async (req, res) => {
 
     res.status(200).json({_id: game._id});
 }
-
-/*
-const createGameFromChallenge = async (challengeId) => {
-    const challenge = await Challenge.findOne({_id: challengeId});
-    const game = await Game.create
-}*/
-
-/*
-    createGameFromChallenge() internal api called by respondToChallenge which requires auth
-*/
-/*
-    request:
-    {
-        challengeId:
-    }
-
-    response:
-    {
-        gameId:
-    }
-*/
 
 const getGamesByUsername = async (req, res) => {
 
