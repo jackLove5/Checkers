@@ -88,7 +88,7 @@ window.addEventListener('load', async (e) => {
                 analyzeGame.constructFromFen(states[i].fen);
                 let [bestMove, evaluation] = ai.getNextMove();
 
-                if (bestMove && i < states.length) {
+                if (bestMove && i + 1 < states.length) {
                     states[i + 1].bestMove = bestMove;
                 }
 
