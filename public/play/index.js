@@ -11,6 +11,7 @@ let options;
 let gameId;
 let playerColor;
 let timeouts = [];
+let vsCpu;
 const setInfoMessage = (text) => {
     const messageDiv = document.getElementById('message');
     messageDiv.innerHTML = '';
@@ -45,6 +46,7 @@ const showDefaultButtons = () => {
     draw.setAttribute('id', 'offer-draw');
     draw.setAttribute('data-cy', 'offer-draw');
     draw.classList.add('button');
+    draw.toggleAttribute('data-visible', !vsCpu);
     draw.onclick = (e) => {
         emittedEvents.offerDraw(gameId);
     };
@@ -108,7 +110,7 @@ const socketHandlers = {
         }
 
         document.getElementById('board').lockBoard();
-        setInfoMessage(`${reason}. ${result}.`);
+        setInfoMessage(`${reason ? reason + "." : ''} ${result}`);
 
         const buttonContainer = document.getElementById('buttons');
         buttonContainer.innerHTML = '';
@@ -269,7 +271,7 @@ socket.on('playerReconnect', socketHandlers.onPlayerReconnect);
 
 
 
-window.addEventListener('load', (e) => {
+window.addEventListener('load', async (e) => {
     const mobileNavToggle = document.querySelector('.mobile-nav-toggle');
     const nav = document.querySelector('nav');
     mobileNavToggle.addEventListener('click', () => {
@@ -278,6 +280,22 @@ window.addEventListener('load', (e) => {
     });
 
     gameId = window.location.href.split('/').at(-1);
+    const game = await fetch(`/api/game/${gameId}`, {method: 'GET'});
+    if (game) {
+        const body = await game.json();
+        console.log(body);
+        if (body.gameState === 'completed') {
+            window.location = `/analyze?g=${gameId}`;
+            return;
+        }
+
+        vsCpu = body.vsCpu;
+        const drawButton = document.getElementById('offer-draw');
+        if (drawButton) {
+            drawButton.toggleAttribute('data-visible', !vsCpu);
+        }
+    }
+
     emittedEvents.joinGame(gameId);
     if (window.Cypress) {
         window.gameId = gameId;

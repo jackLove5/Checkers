@@ -17,16 +17,11 @@ const socketHandlers = {
         onlineUsers = new Set(usernames);
 
         const username = document.getElementById('username').innerText;
-        const statusDiv = document.createElement('div');
-        statusDiv.setAttribute('data-cy', 'status');
         const isOnline = onlineUsers.has(username);
-        statusDiv.setAttribute('data-status', isOnline ? 'online' : 'offline');
-        statusDiv.textContent = statusDiv.getAttribute('data-status');
-        document.querySelector('body').appendChild(statusDiv);
 
         const userLoggedIn = document.getElementById('profile') ? document.getElementById('profile').textContent : '';
-        const displayButton = userLoggedIn && username !== userLoggedIn && isOnline;
-        document.getElementById('challenge').toggleAttribute('is-visible', displayButton)
+        const displayChallengeButton = userLoggedIn && username !== userLoggedIn && isOnline;
+        document.getElementById('challenge').toggleAttribute('is-visible', displayChallengeButton)
     }
 }
 
