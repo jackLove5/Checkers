@@ -328,8 +328,8 @@ class CheckersGame {
 
             const foundMove = foundMoves[0];
             
-            let lastAdvance = stateStack.length === 0 ? undefined : stateStack.at(-1).lastAdvance;
-            let lastCapture = stateStack.length === 0 ? undefined : stateStack.at(-1).lastCapture;
+            let lastAdvance = stateStack.length === 0 ? undefined : stateStack[stateStack.length - 1].lastAdvance;
+            let lastCapture = stateStack.length === 0 ? undefined : stateStack[stateStack.length - 1].lastCapture;
             
             if (foundMove.capturedPieces.length > 0) {
                 lastCapture = stateStack.length;
@@ -372,7 +372,7 @@ class CheckersGame {
                 return true;
             }
             if (stateStack.length > 0) {
-                const {lastAdvance, lastCapture} = stateStack.at(-1);
+                const {lastAdvance, lastCapture} = stateStack[stateStack.length - 1];
                 const movesSinceLastAdvance = Math.floor((stateStack.length - 1 - lastAdvance) / 2);
                 const movesSinceLastCapture = Math.floor((stateStack.length - 1 - lastCapture) / 2);
                 if (movesSinceLastAdvance >= 40 && movesSinceLastCapture >= 40) {
