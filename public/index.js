@@ -30,7 +30,7 @@ window.addEventListener('load', (e) => {
             headers: {
                 "Content-Type": "application/json"
             },
-            body: JSON.stringify({isRanked: false, vsCpu: false})
+            body: JSON.stringify({vsCpu: false})
         });
 
 
@@ -46,7 +46,7 @@ window.addEventListener('load', (e) => {
             headers: {
                 "Content-Type": "application/json"
             },
-            body: JSON.stringify({isRanked: false, vsCpu: true})
+            body: JSON.stringify({vsCpu: true})
         });
 
         const json = await resp.json();

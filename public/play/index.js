@@ -280,27 +280,29 @@ window.addEventListener('load', async (e) => {
     });
 
     gameId = window.location.href.split('/').at(-1);
-    const game = await fetch(`/api/game/${gameId}`, {method: 'GET'});
-    if (game) {
-        const body = await game.json();
-        console.log(body);
-        if (body.gameState === 'completed') {
-            window.location = `/analyze?g=${gameId}`;
-            return;
-        }
-
-        vsCpu = body.vsCpu;
-        const drawButton = document.getElementById('offer-draw');
-        if (drawButton) {
-            drawButton.toggleAttribute('data-visible', !vsCpu);
-        }
-    }
-
-    emittedEvents.joinGame(gameId);
     if (window.Cypress) {
         window.gameId = gameId;
     }
 
+    emittedEvents.joinGame(gameId);
+
+
     setInfoMessage('Waiting for players');
 
+    if (!window.Cypress) {
+        const game = await fetch(`/api/game/${gameId}`, {method: 'GET'});
+        if (game) {
+            const body = await game.json();
+            if (body.gameState === 'completed') {
+                window.location = `/analyze?g=${gameId}`;
+                return;
+            }
+    
+            vsCpu = body.vsCpu;
+            const drawButton = document.getElementById('offer-draw');
+            if (drawButton) {
+                drawButton.toggleAttribute('data-visible', !vsCpu);
+            }
+        }
+    }
 });

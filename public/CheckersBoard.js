@@ -107,6 +107,7 @@ class CheckersBoard extends HTMLElement{
                 if (piece.isKing && !pieceDiv.querySelector('img')) {
                     const crownImg = document.createElement('img');
                     crownImg.setAttribute('src', `/images/crown-${piece.color === CheckersGame.PLAYER_BLACK ? 'white' : 'black'}.png`);
+                    crownImg.draggable = false;
                     pieceDiv.appendChild(crownImg);
                 }
             } else {

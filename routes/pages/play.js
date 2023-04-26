@@ -12,6 +12,7 @@ const play = async (req, res) => {
     try {
         game = await Game.findById(gameId);
     } catch (err) {
+        console.log(`${new Date().toLocaleString()} ${err}`);
         if (err.name == 'CastError') {
             res.status(404).send('');
             return;

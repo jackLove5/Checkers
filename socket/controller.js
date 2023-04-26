@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const Game = mongoose.model('Game');
 const User = mongoose.model('User');
-const Challenge = mongoose.model('Challenge');
+const Challenge = require('../models/challenge')
 const CheckersGame = require('../public/CheckersGame');
 const CheckersAi = require('../public/CheckersAi')
 const Chance = require('chance');
@@ -22,9 +22,11 @@ const joinGame = (socket, io) => async ({id, color}) => {
     try {
         game = await Game.findById(id);
     } catch (err) {
+        console.log(`${new Date().toLocaleString()} ${err}`);
+
+        socket.leave(id);
         if (err.name == 'CastError') {
             io.to(socket.id).emit('badRequest');
-            socket.leave(id);
             return;
         } else {
             io.to(socket.id).emit('serverError');
@@ -77,6 +79,8 @@ const joinGame = (socket, io) => async ({id, color}) => {
                 } else {
                     io.to(socket.id).emit('playerDisconnect', {disconnectTime: game.disconnectTime});
                 }
+            } else {
+                socket.leave(id);
             }
         });
 
@@ -109,10 +113,12 @@ const joinGame = (socket, io) => async ({id, color}) => {
                 playerWhiteRating: cpuColor === 'w' ? 0 : playerRating
             });
         } catch (error) {
+            console.log(`${new Date().toLocaleString()} ${error}`);
             io.to(socket.id).emit('serverError');
             return;
         }
 
+        console.log(`${new Date().toLocaleString()} Starting game. id: ${id}`);
         io.to(socket.id).emit('startGame', {moveOptions, color: playerColor});
         socket.handshake.session.reload((err) => {
 
@@ -120,6 +126,9 @@ const joinGame = (socket, io) => async ({id, color}) => {
                 return socket.disconnect();
             }
 
+            if (!socket.handshake.session.games) {
+                socket.handshake.session.games = {};
+            }
             socket.handshake.session.games[id] = {color: playerColor};
             socket.handshake.session.save();
         });
@@ -132,6 +141,7 @@ const joinGame = (socket, io) => async ({id, color}) => {
             try {
                 await executeMoveAndNotify(io, firstMove, checkersGame, id);
             } catch (err) {
+                console.log(`${new Date().toLocaleString()} ${err}`);
                 io.to(socket.id).emit('serverError');
                 return;
             }
@@ -147,6 +157,13 @@ const joinGame = (socket, io) => async ({id, color}) => {
             if (color !== 'b' && color !== 'w') {
                 color = chance.bool() ? 'b' : 'w';
             }
+
+            if (game.playerBlack !== 'Guest' && game.playerWhite !== 'Guest' && username !== game.playerBlack && username !== game.playerWhite) {
+                socket.leave(id);
+                io.to(socket.id).emit('badRequest', {});
+                return;
+            }
+
             if (username) {
                 if (game.playerBlack === username || game.playerWhite === username) {
                     color = game.playerBlack === username ? 'b' : 'w';
@@ -160,6 +177,9 @@ const joinGame = (socket, io) => async ({id, color}) => {
                 }
             }
 
+            if (!socket.handshake.session.games) {
+                socket.handshake.session.games = {};
+            }
             socket.handshake.session.games[id] = {color};
             socket.handshake.session.save();
         });
@@ -170,6 +190,7 @@ const joinGame = (socket, io) => async ({id, color}) => {
         try {
             await Game.updateOne({_id: id}, {gameState: 'in_progress'});
         } catch (error) {
+            console.log(`${new Date().toLocaleString()} ${error}`);
             io.to(socket.id).emit('serverError');
             return;
         }
@@ -191,6 +212,19 @@ const joinGame = (socket, io) => async ({id, color}) => {
 
                 const p2Username = socket.handshake.session.username;
                 const p2Color = p1Color === 'b' ? 'w' : 'b';
+
+                if (p2Color === 'b' && game.playerBlack !== 'Guest' && p2Username !== game.playerBlack) {
+                    socket.leave(id);
+                    io.to(socket.id).emit('badRequest', {});
+                    return;
+                }
+
+                if (p2Color === 'w' && game.playerWhite !== 'Guest' && p2Username !== game.playerWhite) {
+                    socket.leave(id);
+                    io.to(socket.id).emit('badRequest', {});
+                    return;
+                }
+
                 if (p2Username) {
                     const p2User = await User.findOne({username: p2Username});
                     if (p2Color === 'b') {
@@ -200,8 +234,14 @@ const joinGame = (socket, io) => async ({id, color}) => {
                     }
                 }
 
+                if (!socket.handshake.session.games) {
+                    socket.handshake.session.games = {};
+                }
                 socket.handshake.session.games[id] = {color: p2Color};
                 socket.handshake.session.save();
+                
+                console.log(`${new Date().toLocaleString()} Starting game. id: ${id}`);
+                
                 io.to(p1SocketId).emit('startGame', {moveOptions, color: p1Color});
                 io.to(socket.id).emit('startGame', {moveOptions, color: p2Color});
             })
@@ -234,11 +274,21 @@ const disconnecting = (socket, io) => async ({}) => {
                 try {
                     game = await Game.findById(roomId);
                 } catch (err) {
+                    console.log(`${new Date().toLocaleString()} ${err}`);
                     return;
                 }
 
-                if (playerCount === 0 && game.disconnectTime && Date.now() - parseInt(game.disconnectTime) >= 10000) {
-                    await stopGameAndNotify(io, game._id, 'd', 'Both players left');
+                if (playerCount === 0 && game.gameState === 'in_progress' && game.disconnectTime && Date.now() - parseInt(game.disconnectTime) >= 10000) {
+                    let res, reason;
+                    if (game.vsCpu) {
+                        res = game.playerBlack === 'Computer' ? 'b' : 'w';
+                        reason = 'Player left';
+                    } else {
+                        res = 'd';
+                        reason = 'Both players left';
+                    }
+                    
+                    await stopGameAndNotify(io, game._id, res, reason);
                 }
             }, 10000);
         } else {
@@ -293,6 +343,8 @@ const updateRatings = async (game) => {
     await User.updateOne({_id: playerWhite._id}, {rating: whiteRating});
 }
 const stopGameAndNotify = async (io, gameId, result, reason) => {
+    console.log(`${new Date().toLocaleString()} Stopping game. id: ${gameId}, result: ${result}, reason: ${reason}`);
+
     try {
         let game = await Game.findById(gameId);
         if (!game || game.gameState !== 'in_progress')  {
@@ -305,7 +357,6 @@ const stopGameAndNotify = async (io, gameId, result, reason) => {
         }
         io.in(gameId).emit('gameOver', {gameId, result, reason});
 
-
     } catch (err) {
         throw err;
     }
@@ -315,6 +366,7 @@ const makeMove = (socket, io) => async ({move, id}) => {
     try {
         gameRecord = await Game.findById(id);
     } catch (err) {
+        console.log(`${new Date().toLocaleString()} ${err}`);
         io.to(socket.id).emit('badRequest', {});
         return;
     }
@@ -337,8 +389,13 @@ const makeMove = (socket, io) => async ({move, id}) => {
             return socket.disconnect();
         }
 
+        if (!socket.handshake.session.games || !socket.handshake.session.games[id]) {
+            io.to(socket.id).emit('badRequest', () => {});
+            return;
+        }
+
         const color = socket.handshake.session.games[id].color;
-        if (!socket.handshake.session.games[id] || game.turn !== color) {
+        if (game.turn !== color) {
             io.to(socket.id).emit('badRequest', () => {});
             return;
         }
@@ -355,6 +412,7 @@ const makeMove = (socket, io) => async ({move, id}) => {
         try {
             await executeMoveAndNotify(io, move, game, id);
         } catch (err) {
+            console.log(`${new Date().toLocaleString()} ${err}`);
             io.to(socket.id).emit('badRequest', () => {});
             return;
         }
@@ -367,6 +425,7 @@ const makeMove = (socket, io) => async ({move, id}) => {
             try {
                 await stopGameAndNotify(io, id, result, reason);
             } catch (err) {
+                console.log(`${new Date().toLocaleString()} ${err}`);
                 io.to(id).emit('serverError', {});
             }
             return;
@@ -379,6 +438,7 @@ const makeMove = (socket, io) => async ({move, id}) => {
             try {
                 await executeMoveAndNotify(io, move, game, id);
             } catch (err) {
+                console.log(`${new Date().toLocaleString()} ${err}`);
                 io.to(socket.id).emit('serverError');
                 return;
             }
@@ -391,6 +451,7 @@ const makeMove = (socket, io) => async ({move, id}) => {
                 try {
                     await stopGameAndNotify(io, id, result, reason);
                 } catch (err) {
+                    console.log(`${new Date().toLocaleString()} ${err}`);
                     io.to(id).emit('serverError', {});
                 }
                 return;
@@ -421,7 +482,9 @@ const resign = (socket, io) =>  async ({id}) => {
         try {
             game = await Game.findById(id);
         } catch (err) {
+            console.log(`${new Date().toLocaleString()} ${err}`);
             io.to(id).emit('serverError', {});
+            return;
         }
 
         if (!game || game.gameState !== 'in_progress') {
@@ -432,6 +495,7 @@ const resign = (socket, io) =>  async ({id}) => {
         try {
             await stopGameAndNotify(io, id, result, reason);
         } catch (err) {
+            console.log(`${new Date().toLocaleString()} ${err}`);
             io.to(id).emit('serverError', {});
         }
     })
@@ -442,6 +506,11 @@ const offerDraw = (socket, io) =>  async ({id}) => {
     socket.handshake.session.reload(async (err) => {
         if (err) {
             return socket.disconnect();
+        }
+
+        if (!socket.handshake.session.games || !socket.handshake.session.games[id]) {
+            io.to(socket.id).emit('badRequest', {});
+            return;
         }
 
         const color = socket.handshake.session.games[id].color;
@@ -456,13 +525,13 @@ const offerDraw = (socket, io) =>  async ({id}) => {
             try {
                 await stopGameAndNotify(io, id, 'd', 'Mutual agreement');
             } catch (err) {
+                console.log(`${new Date().toLocaleString()} ${err}`);
                 io.to(id).emit('serverError', {});
             }
         } else if (!game.drawOffered)  {
             await Game.updateOne({_id: id}, {drawOffered: color});
             io.to(id).emit('offerDraw', {id, color});
         }
-
     })
 };
 
@@ -472,6 +541,11 @@ const respondDraw = (socket, io) =>  async ({id, accept}) => {
             return socket.disconnect();
         }
 
+        if (!socket.handshake.session.games || !socket.handshake.session.games[id]) {
+            io.to(socket.id).emit('badRequest', {});
+            return;
+        }
+
         const color = socket.handshake.session.games[id].color;
         const game = await Game.findById(id);
         if (game.drawOffered && game.drawOffered !== color && accept) {
@@ -479,6 +553,7 @@ const respondDraw = (socket, io) =>  async ({id, accept}) => {
             try {
                 await stopGameAndNotify(io, id, 'd', 'Mutual agreement');
             } catch (err) {
+                console.log(`${new Date().toLocaleString()} ${err}`);
                 io.to(id).emit('serverError', {});
             }
         } else if (game.drawOffered && game.drawOffered !== color) {
@@ -495,7 +570,7 @@ const claimWin = (socket, io) => async ({id}) => {
             return socket.disconnect();
         }
 
-        if (!socket.handshake.session.games[id]) {
+        if (!socket.handshake.session.games || !socket.handshake.session.games[id]) {
             io.to(id).emit('badRequest', {});
             return;
         }
@@ -518,7 +593,7 @@ const callDraw = (socket, io) => async ({id}) => {
             return socket.disconnect();
         }
 
-        if (!socket.handshake.session.games[id]) {
+        if (!socket.handshake.session.games || !socket.handshake.session.games[id]) {
             io.to(id).emit('badRequest', {});
             return;
         }
@@ -534,6 +609,8 @@ const callDraw = (socket, io) => async ({id}) => {
 }
 
 const createChallenge = (socket, io) => async ({receiverName, isRanked, color}) => {
+    console.log(`${new Date().toLocaleString()} creating challenge. receiverName: ${receiverName}`);
+
     if (!socket.handshake.session || !socket.handshake.session.username) {
         socket.emit('badRequest', {});
         return;
@@ -571,6 +648,8 @@ const createChallenge = (socket, io) => async ({receiverName, isRanked, color}) 
             isRanked
         });
     } catch (err) {
+        console.log(`${new Date().toLocaleString()} error creating challenge. ${err}`);
+
         if (err.name == 'CastError') {
             socket.emit('badRequest');
         } else {
@@ -584,14 +663,14 @@ const createChallenge = (socket, io) => async ({receiverName, isRanked, color}) 
 
     socket.join(`${newChallenge._id}`);
 
+    console.log(`${new Date().toLocaleString()} successfully created challenge. id: ${newChallenge._id}`);
 
     io.to(receiverName).emit('challengeRequest', {challenge: newChallenge});
 
 };
 
 const respondToChallenge = (socket, io) => async ({challengeId, accept}) => {
-
-    const rooms = io.sockets.adapter.rooms;
+    console.log(`${new Date().toLocaleString()} response to challengeId: ${challengeId}`);
 
 
     if (!socket.handshake.session || !socket.handshake.session.username) {
@@ -605,6 +684,7 @@ const respondToChallenge = (socket, io) => async ({challengeId, accept}) => {
     try {
         challenge = await Challenge.findById(challengeId);
     } catch (err) {
+        console.log(`${new Date().toLocaleString()} ${err}`);
         socket.emit('badRequest', {});
         return;
     }
@@ -634,15 +714,18 @@ const respondToChallenge = (socket, io) => async ({challengeId, accept}) => {
                 playerWhiteRating: playerWhiteUser ? playerWhiteUser.rating : 0
             });
         } catch (err) {
+            console.log(`${new Date().toLocaleString()} ${err}`);
             return;
         }
 
         await Challenge.updateOne({_id: challenge._id}, {status: 'accepted'});
-        socket.join(`${challengeId}`);
+        socket.join(`${challenge._id}`);
 
-        io.to(`${challengeId}`).emit('challengeStart', {gameId: newGame._id});
+        console.log(`${new Date().toLocaleString()} challengeId: ${challengeId} accepted. starting challenge`);
+        io.to(`${challenge._id}`).emit('challengeStart', {gameId: newGame._id});
     } else {
         await Challenge.updateOne({_id: challenge._id}, {status: 'rejected'});
+        console.log(`${new Date().toLocaleString()} challengeId: ${challengeId} rejected by ${username}`);
         io.to(`${challenge._id}`).emit('challengeRejected', {});
     }
 }

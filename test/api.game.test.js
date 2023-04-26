@@ -1,4 +1,4 @@
-const app = require('../app');
+const {app} = require('../app');
 const request = require('supertest');
 
 const connectDB = require('../db/connect')
@@ -31,7 +31,6 @@ describe('/api/game/', () => {
     describe('/create POST', () => {
         test("return created game's id on success", async () => {
             const res = await request(app).post('/api/game/create').send({
-                isRanked: false,
                 vsCpu: false
             });
 
@@ -40,7 +39,6 @@ describe('/api/game/', () => {
 
         test('return status 200 when game created successfully', async () => {
             const res = await request(app).post('/api/game/create').send({
-                isRanked: false,
                 vsCpu: false
             });
     
@@ -49,18 +47,9 @@ describe('/api/game/', () => {
 
 
         describe('return status 400 when', () => {
-            test("isRanked field is not a boolean type", async () => {
-                const res = await request(app).post('/api/game/create').send({
-                    isRanked: 'true',
-                    vsCpu: false
-                });
-    
-                expect(res.statusCode).toBe(400);
-            });
     
             test("vsCpu field is not a boolean type", async () => {
                 const res = await request(app).post('/api/game/create').send({
-                    isRanked: true,
                     vsCpu: 'true'
                 });
     
@@ -71,7 +60,6 @@ describe('/api/game/', () => {
         test("database is disconnected", async () => {
             await db.disconnect();
             const res = await request(app).post('/api/game/create').send({
-                isRanked: true,
                 vsCpu: true
             });
     

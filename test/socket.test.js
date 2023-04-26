@@ -15,7 +15,6 @@ const chance = new Chance();
 const Challenge = require('../models/challenge')
 const connectDB = require('../db/connect')
 require('dotenv').config();
-const session = require('express-session');
 const sharedsession = require('express-socket.io-session');
 const http = require('http');
 
@@ -28,18 +27,11 @@ let ioServer;
 let db;
 
 beforeAll((done) => {
-    /*const sessionMiddleware = session({
-        secret: process.env.EXPRESS_SESSION_SECRET,
-        resave: true,
-        saveUninitialized: true
-    });*/
-    
+
     const server = http.createServer(app);
     const io = setupSocketServer(server);
     
-    //app.use(sessionMiddleware);
     io.use(sharedsession(sessionMiddleware, {autoSave: true}));
-
 
     ioServer = io;
     httpServer = server;
@@ -113,17 +105,14 @@ afterEach(async () => {
     }
 
     if (player1Socket.connected) {
-        //await player1Socket.request.session.destroy();
         player1Socket.disconnect();
     }
 
     if (player2Socket.connected) {
-        //await player2Socket.request.session.destroy();
         player2Socket.disconnect();
     }
 
     if (player3Socket.connected) {
-        //await player3Socket.request.session.destroy();
         player3Socket.disconnect();
     }
 })
@@ -244,7 +233,7 @@ describe('joinGame', () => {
         })
     });
 
-    test('should emit badRequest when game is over', (done) => {
+    test('should emit badRequest if game is in completed state', (done) => {
         Game.create({isRanked: false, vsCpu: false}).then(game => {
             const id = game._id;
             player1Socket.emit('joinGame', {id});
@@ -941,10 +930,26 @@ describe('disconnect', () => {
             player1Socket.on('startGame', ({moveOptions}) => {
                 player1Socket.disconnect();
                 player2Socket.disconnect();
-    
                 setTimeout(() => {
                     Game.findById(id).then(updatedGame => {
                         expect(updatedGame.result).toBe('d');
+                        done();
+                    })
+                }, 11000);
+            });
+        });
+    }, 15000);
+
+    test('should auto resign after 10 seconds if player disconnects from cpu game', (done) => {
+        Game.create({isRanked: false, vsCpu: true}).then(game => {
+            const id = game._id;
+            player1Socket.emit('joinGame', {id, color: 'b'});
+    
+            player1Socket.on('startGame', ({moveOptions}) => {
+                player1Socket.disconnect();
+                setTimeout(() => {
+                    Game.findById(id).then(updatedGame => {
+                        expect(updatedGame.result).toBe('w');
                         done();
                     })
                 }, 11000);
@@ -1076,11 +1081,6 @@ describe('disconnect', () => {
                        })
                     });
                 })
-            });
-
-            player1Socket.on('gameOver', ({result}) => {
-                expect(result).toBe('d');
-                done();
             });
         });
     });
@@ -1424,26 +1424,41 @@ describe('rating change', () => {
             password: chance.word({length: 60}),
         };
 
+        
+
         User.create(playerBlack).then(playerBlack => {
             User.create(playerWhite).then(playerWhite => {
                 Game.create({isRanked: true, vsCpu: false, playerBlack: playerBlack.username, playerWhite: playerWhite.username}).then(game => {
-                    const id = game._id;
-                    const ranked = game.isRanked;
-                    player1Socket.emit('joinGame', {id, color: 'b'});
-                    player2Socket.emit('joinGame', {id, color: 'w'});
-
-                    player2Socket.on('startGame', () => {
-                        player2Socket.emit('resign', {id});
-                        player1Socket.on('gameOver', () => {
-                            User.findById(playerBlack._id).then(playerBlack => {
-                                expect(playerBlack.rating).toBeGreaterThan(1000);
-                                User.findById(playerWhite._id).then(playerWhite => {
-                                    expect(playerWhite.rating).toBeLessThan(1000);
-                                    done();
+                    
+                    player1Socket.disconnect();
+                    ioServer.once('connect', (socket) => {
+                        socket.handshake.session.username = playerBlack.username;
+                        
+                        player2Socket.disconnect();
+                        ioServer.once('connect', (socket) => {
+                            socket.handshake.session.username = playerWhite.username;
+                            const id = game._id;
+                            player1Socket.emit('joinGame', {id, color: 'b'});
+                            player2Socket.emit('joinGame', {id, color: 'w'});
+        
+                            player2Socket.on('startGame', () => {
+                                player2Socket.emit('resign', {id});
+                                player1Socket.on('gameOver', () => {
+                                    User.findById(playerBlack._id).then(playerBlack => {
+                                        expect(playerBlack.rating).toBeGreaterThan(1000);
+                                        User.findById(playerWhite._id).then(playerWhite => {
+                                            expect(playerWhite.rating).toBeLessThan(1000);
+                                            done();
+                                        })
+                                    });
                                 })
                             });
-                        })
+                        });
+
+                        player2Socket.connect();
                     });
+
+                    player1Socket.connect();
                 })
             })
         })

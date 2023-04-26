@@ -2,26 +2,22 @@ const Game = require('../models/Game')
 
 const createGame = async (req, res) => {
 
-    if (typeof req.body.isRanked !== 'boolean') {
-        res.status(400).send('');
-        return;
-    }
-
     if (typeof req.body.vsCpu !== 'boolean') {
         res.status(400).send('')
         return;
     }
 
-    const isRanked = req.body.isRanked;
     const vsCpu = req.body.vsCpu;
     let game;
     try {
-        game = await Game.create({isRanked, vsCpu});
+        game = await Game.create({vsCpu, isRanked: false});
     } catch (error) {
+        console.log(`${new Date().toLocaleString()} error creating game. ${error}`);
         res.status(500).send('');
         return;
     }
 
+    console.log(`${new Date().toLocaleString()} created game. id: ${game._id}`);
     res.status(200).json({_id: game._id});
 }
 
@@ -33,6 +29,7 @@ const getGamesByUsername = async (req, res) => {
         list1 = await Game.find({playerBlack: username});
         list2 = await Game.find({playerWhite: username});
     } catch (error) {
+        console.log(`${new Date().toLocaleString()} ${error}`);
         res.status(500).send('');
         return;
     }
@@ -46,6 +43,7 @@ const getGameById = async (req, res) => {
     try {
         game = await Game.findById(gameId);
     } catch (err) {
+        console.log(`${new Date().toLocaleString()} ${err}`);
         if (err.name == 'CastError') {
             res.status(404).send('');
             return;

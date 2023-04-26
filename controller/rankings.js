@@ -7,6 +7,7 @@ const getRankings = async (req, res) => {
     try {
         users = await User.find({}).sort({'rating' : 'desc'});
     } catch (err) {
+        console.log(`${new Date().toLocaleString()} ${err}`);
         res.status(500).send('');
         return;
     }
