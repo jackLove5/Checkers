@@ -11,14 +11,14 @@ const start = async () => {
         await connectDB(process.env.MONGO_URI_DEV)
         
         const server = http.createServer(app);
-        //const io = setupSocketServer(server);
+        const io = setupSocketServer(server);
         
-        //io.use(sharedsession(sessionMiddleware, {autoSave: true}));
+        io.use(sharedsession(sessionMiddleware, {autoSave: true}));
 
         server.listen(process.env.PORT, console.log(`Server listening on port ${process.env.PORT}`))
 
     } catch (error) {
-        console.error(error);
+        console.log(`${new Date().toLocaleString()} error starting server ${error}`);
     }
 }
 

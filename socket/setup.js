@@ -5,6 +5,7 @@ const setupSocketServer = (server) => {
 
 
     io.on('connection', async (socket) => {
+        console.log(`${new Date().toLocaleString()} received socket connection`);
         if (!socket.handshake.session.games) {
             socket.handshake.session.games = {};
             socket.handshake.session.save();
@@ -14,6 +15,9 @@ const setupSocketServer = (server) => {
             socket.join(socket.handshake.session.username);
             socket.join("*loggedIn");
         }
+
+        console.log(`${new Date().toLocaleString()} registering socket event handlers`);
+
 
         socket.on('joinGame', joinGame(socket, io));
         socket.on('makeMove', makeMove(socket, io));
@@ -34,13 +38,13 @@ const setupSocketServer = (server) => {
                 .map(socket => socket.handshake.session.username);
         }
 
+        console.log(`${new Date().toLocaleString()} emitting onlineUsers`);
+
+
         io.emit('onlineUsers', {usernames});
     });
 
-
-
     server.on('listening', () => {
-        let httpServer = server;
         console.log(`socket server started: http://[${server.address().address}]:${server.address().port}`)
     })
 
