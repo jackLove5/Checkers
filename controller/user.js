@@ -84,9 +84,9 @@ const authenticateUser = async (req, res) => {
         const match = await bcrypt.compare(req.body.password.normalize(), user.password);
         if (match) {
             console.log(`${new Date().toLocaleString()} successful login for username: ${req.body.username}`);
-            res.status(200).send('');
             req.session.username = user.username;
             req.session.save();
+            res.status(200).send('');
         } else {
             res.status(401).send('Invalid username or password');
             console.log(`${new Date().toLocaleString()} failed password attempt for username: ${req.body.username}`);
