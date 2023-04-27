@@ -5,7 +5,8 @@ const setupSocketServer = (server) => {
 
 
     io.on('connection', async (socket) => {
-        console.log(`${new Date().toLocaleString()} received socket connection`);
+        console.log(`${new Date().toLocaleString()} received socket connection. socketId: ${socket.id} session: ${JSON.stringify(socket.handshake.session)}`);
+
         if (!socket.handshake.session.games) {
             socket.handshake.session.games = {};
             socket.handshake.session.save();

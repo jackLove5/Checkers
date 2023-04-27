@@ -9,6 +9,8 @@ const chance = new Chance();
 require('dotenv').config();
 
 const joinGame = (socket, io) => async ({id, color}) => {
+    console.log(`${new Date().toLocaleString()} joining game. socketId: ${socket.id} session: ${JSON.stringify(socket.handshake.session)}`);
+
     socket.join(id);
     const playerCount = io.sockets.adapter.rooms.get(id).size;
 
@@ -250,6 +252,9 @@ const joinGame = (socket, io) => async ({id, color}) => {
 }
 
 const disconnecting = (socket, io) => async ({}) => {
+
+    console.log(`${new Date().toLocaleString()} socket disconnecting. socketId: ${socket.id} session: ${JSON.stringify(socket.handshake.session)}`);
+
     for (const roomId of socket.rooms) {
         if (roomId === socket.id) {
             continue;
