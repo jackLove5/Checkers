@@ -3,7 +3,7 @@ const CheckersGame = require("./CheckersGame")
 class CheckersAi {
     constructor(game) {
         this.game = game;
-        this.maxDepth = 8;
+        this.maxDepth = 6;
 
         this.maxValue = (state, a, b, depth) => {
             if (state.getWinner() || state.isDraw() || depth == this.maxDepth) {
