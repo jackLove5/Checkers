@@ -2,16 +2,24 @@ const CheckersBoard = require('../CheckersBoard')
 import {challengeSocketHandlers, registerChallengeHandlers} from "../challenge";
 const {io} = require('../socket.io.js');
 
+let options;
+const gameId = window.location.href.split('/').at(-1);
+let playerColor;
+let timeouts = [];
+let vsCpu;
+
 let socket = io.connect("/", {
     withCredentials: true
 });
 
+socket.on('connect', () => {
+    emittedEvents.joinGame(gameId);
+});
 
-let options;
-let gameId;
-let playerColor;
-let timeouts = [];
-let vsCpu;
+socket.on('disconnect', (reason) => {
+    console.log(`socket disconnected. reason: ${reason}`);
+});
+
 const setInfoMessage = (text) => {
     const messageDiv = document.getElementById('message');
     messageDiv.innerHTML = '';
@@ -279,13 +287,9 @@ window.addEventListener('load', async (e) => {
         mobileNavToggle.setAttribute('aria-expanded', nav.hasAttribute('data-visible'));
     });
 
-    gameId = window.location.href.split('/').at(-1);
     if (window.Cypress) {
         window.gameId = gameId;
     }
-
-    emittedEvents.joinGame(gameId);
-
 
     setInfoMessage('Waiting for players');
 
