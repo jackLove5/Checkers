@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "jest",
-    "start": "npm start",
+    "start": "node server.js",
     "rebuild": "npx browserify ./public/play/index.js -t babelify > ./public/play/bundle.js && npx browserify ./public/analyze/index.js -t babelify > ./public/analyze/bundle.js && npx browserify ./public/index.js -t babelify > ./public/bundle.js"
   },
   "keywords": [],
