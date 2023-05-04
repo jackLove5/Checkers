@@ -20,6 +20,13 @@ const joinGame = (socket, io) => async ({id, color}) => {
         return;
     }
 
+    const p1SocketId = Array.from(io.sockets.adapter.rooms.get(id)).find(id => id !== socket.id);
+    if (p1SocketId && socket.handshake.session.socketIds.includes(p1SocketId)) {
+        socket.leave(id);
+        io.to(socket.id).emit('badRequest', {});
+        return;
+    }
+
     let game;
     try {
         game = await Game.findById(id);
@@ -254,7 +261,7 @@ const joinGame = (socket, io) => async ({id, color}) => {
 const disconnecting = (socket, io) => async ({}) => {
 
     console.log(`${new Date().toLocaleString()} socket disconnecting. socketId: ${socket.id} session: ${JSON.stringify(socket.handshake.session)}`);
-
+    socket.handshake.session.socketIds = socket.handshake.session.socketIds.filter(sid => sid !== socket.id);
     for (const roomId of socket.rooms) {
         if (roomId === socket.id) {
             continue;

@@ -9,8 +9,15 @@ const setupSocketServer = (server) => {
 
         if (!socket.handshake.session.games) {
             socket.handshake.session.games = {};
-            socket.handshake.session.save();
         }
+
+        if (!socket.handshake.session.socketIds) {
+            socket.handshake.session.socketIds = [socket.id];
+        } else {
+            socket.handshake.session.socketIds.push(socket.id);
+        }
+
+        socket.handshake.session.save();
 
         if (socket.handshake.session && socket.handshake.session.username) {
             socket.join(socket.handshake.session.username);
