@@ -938,7 +938,8 @@ var CheckersBoard = require('../CheckersBoard');
 var _require = require('../socket.io.js'),
   io = _require.io;
 var options;
-var gameId = window.location.href.split('/').at(-1);
+var toks = window.location.href.split('/');
+var gameId = toks[toks.length - 1];
 var playerColor;
 var timeouts = [];
 var vsCpu;
@@ -1052,7 +1053,7 @@ var socketHandlers = {
     clearMessage();
     showDefaultButtons();
     var board = document.querySelector('#board');
-    board.lastMove = completedMoves.at(-1).shortNotation.split(/x|-/);
+    board.lastMove = completedMoves[completedMoves.length - 1].shortNotation.split(/x|-/);
     board.setBoardFromFen(fen);
     options = moveOptions;
   },

@@ -7,10 +7,6 @@ h1 {
     font-size: 4rem;
 }
 
-#board-wrapper {
-    width: 66%;
-    margin: 3rem;
-}
 main {
     display: flex;
     align-items: center;
@@ -50,6 +46,7 @@ main {
 #offer-draw[data-visible] {
     display: block;
 }
+
 @media(min-width: 40em) {
     #board-wrapper {
         width: 35%;
@@ -59,6 +56,4 @@ main {
     main {
         flex-direction: row;
     }
-
-
 }

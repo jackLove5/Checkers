@@ -3,11 +3,11 @@ import {challengeSocketHandlers, registerChallengeHandlers} from "../challenge";
 const {io} = require('../socket.io.js');
 
 let options;
-const gameId = window.location.href.split('/').at(-1);
+let toks = window.location.href.split('/');
+const gameId = toks[toks.length - 1];
 let playerColor;
 let timeouts = [];
 let vsCpu;
-
 let socket = io.connect("/", {
     withCredentials: true
 });
@@ -105,7 +105,8 @@ const socketHandlers = {
         showDefaultButtons();
 
         let board = document.querySelector('#board');
-        board.lastMove = completedMoves.at(-1).shortNotation.split(/x|-/);
+
+        board.lastMove = completedMoves[completedMoves.length-1].shortNotation.split(/x|-/);
         board.setBoardFromFen(fen);
         options = moveOptions;
     },
@@ -290,7 +291,7 @@ window.addEventListener('load', async (e) => {
     if (window.Cypress) {
         window.gameId = gameId;
     }
-
+    
     setInfoMessage('Waiting for players');
 
     if (!window.Cypress) {

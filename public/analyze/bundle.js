@@ -988,7 +988,8 @@ window.addEventListener('load', /*#__PURE__*/function () {
                       selectedMove.classList.remove('selected-move');
                     }
                     e.target.classList.add('selected-move');
-                    board.lastMove = [states[i].moveText.split(/x|-/)[0], states[i].moveText.split(/x|-/).at(-1)];
+                    var lastMove = states[i].moveText.split(/x|-/);
+                    board.lastMove = [lastMove[0], lastMove[lastMove.length - 1]];
                     board.bestMove = states[i].bestMove.shortNotation.split(/x|-/);
                     board.setBoardFromFen(states[i].fen);
                     board.drawBoard();
