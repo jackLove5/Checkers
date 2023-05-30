@@ -261,7 +261,11 @@ const joinGame = (socket, io) => async ({id, color}) => {
 const disconnecting = (socket, io) => async ({}) => {
 
     console.log(`${new Date().toLocaleString()} socket disconnecting. socketId: ${socket.id} session: ${JSON.stringify(socket.handshake.session)}`);
-    socket.handshake.session.socketIds = socket.handshake.session.socketIds.filter(sid => sid !== socket.id);
+    if (socket.handshake.session.socketIds) {
+        socket.handshake.session.socketIds = socket.handshake.session.socketIds.filter(sid => sid !== socket.id);
+        socket.handshake.session.save();
+    }
+
     for (const roomId of socket.rooms) {
         if (roomId === socket.id) {
             continue;
