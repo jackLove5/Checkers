@@ -1,16 +1,11 @@
 const Piece = require('./Piece');
 
-//import {Piece } from "./Piece.js";
-
 class CheckersGame {
-    static STARTING_PIECE_COUNT_PER_PLAYER = 12;
-    static NUM_PLAYERS = 2;
     static PLAYER_WHITE = 'w';
     static PLAYER_BLACK = 'b';
 
-
     constructor() {
-        this.players = new Array(CheckersGame.NUM_PLAYERS);
+        this.turn = CheckersGame.PLAYER_BLACK;
         let board = {};
         let stateStack = [];
         for (let i = 1; i <= 32; i++) {
@@ -21,6 +16,25 @@ class CheckersGame {
             } else {
                 board["" + i] = new Piece("w");
             }
+        }
+
+        const notationToCoords = (num) => {
+            num = parseInt(num);
+            if (typeof num !== 'number' || Number.isNaN(num) || num > 32 || num < 1) {
+                return undefined;
+            }
+
+            const row = Math.floor((num - 1) / 4);
+            const col = row % 2 === 0 ? 1 + ((num - 1) % 4) * 2 : ((num - 1) % 4) * 2;
+            return [row, col];
+        }
+
+        const coordsToNotation = (row, col) => {
+            if (row < 0 || row >= 8 || col < 0 || col >= 8 || row % 2 === col % 2) {
+                return undefined;
+            }
+
+            return row * 4 + Math.floor(col / 2) + 1;
         }
 
         const getFen = () => {
@@ -40,92 +54,46 @@ class CheckersGame {
             const turn = this.turn === CheckersGame.PLAYER_WHITE ? 'W' : 'B';
             return `${turn}:W${whitePieces.join(',')}:B${blackPieces.join(',')}`;
         }
+
         const getPlayableMovesByPos = (pos) => {
             pos = parseInt(pos);
             const possibleJumps = getPlayableJumpMoves();
+
             if (possibleJumps.length > 0) {
-                return possibleJumps.filter(jumpMove => jumpMove.shortNotation.split("x")[0] == pos);
+                return possibleJumps.filter(jumpMove => jumpMove.origin == pos);
             }
             
             let possibleMoves = [];
             const movingPiece = board[pos];
+
             if (!movingPiece || movingPiece.color != this.turn) {
                 return [];
             }
 
+            let yDirections = [];
+            let xDirections = [-1, 1];
             if (movingPiece.color === CheckersGame.PLAYER_BLACK || movingPiece.isKing) {
-                const row = Math.floor((pos - 1) / 4);
-                if (row % 2 === 0) {
-                    if (pos + 4 <= 32 && board[pos + 4] === null) {
-                        possibleMoves = possibleMoves.concat({
-                            shortNotation: `${pos}-${pos+4}`,
-                            longNotation: `${pos}-${pos+4}`,
-                            capturedPieces: []
-                        });
-                    }
-
-                    if (pos + 5 <= 32 && pos % 8 !== 4 && board[pos + 5] === null) {
-                        possibleMoves = possibleMoves.concat({
-                            shortNotation: `${pos}-${pos+5}`,
-                            longNotation: `${pos}-${pos+5}`,
-                            capturedPieces: []
-                        });
-                    }
-                
-                } else {
-
-                    if (pos + 4 <= 32 && board[pos + 4] === null) {
-                        possibleMoves = possibleMoves.concat({
-                            shortNotation: `${pos}-${pos+4}`,
-                            longNotation: `${pos}-${pos+4}`,
-                            capturedPieces: []
-                        });
-                    }
-
-                    if (pos + 3 <= 32 && pos % 8 !== 5 && board[pos + 3] === null) {
-                        possibleMoves = possibleMoves.concat({
-                            shortNotation: `${pos}-${pos+3}`,
-                            longNotation: `${pos}-${pos+3}`,
-                            capturedPieces: []
-                        });
-                    }
-                }
+                yDirections.push(1);
             }
 
             if (movingPiece.color === CheckersGame.PLAYER_WHITE || movingPiece.isKing) {
+                yDirections.push(-1);
+            }
 
-                const row = Math.floor((pos - 1) / 4);
-                if (row % 2 === 0) {
+            if (notationToCoords(pos) === undefined) {
+                throw `Invalid piece position ${pos}`;
+            }
 
-                    if (pos - 4 >= 1 && board[pos - 4] === null) {
-                        possibleMoves = possibleMoves.concat({
-                            shortNotation: `${pos}-${pos-4}`,
-                            longNotation: `${pos}-${pos-4}`,
-                            capturedPieces: []
-                        });
-                    }
-
-                    if (pos - 3 >= 1 && pos % 8 !== 4 && board[pos - 3] === null) {
-                        possibleMoves = possibleMoves.concat({
-                            shortNotation: `${pos}-${pos-3}`,
-                            longNotation: `${pos}-${pos-3}`,
-                            capturedPieces: []
-                        });
-                    }
-                } else {
-    
-                    if (pos - 4 >= 1 && board[pos - 4] === null) {
-                        possibleMoves = possibleMoves.concat({
-                            shortNotation: `${pos}-${pos-4}`,
-                            longNotation: `${pos}-${pos-4}`,
-                            capturedPieces: []
-                        });
-                    }
-
-                    if (pos - 5 >= 1 && pos % 8 !== 5 && board[pos - 5] === null) {
-                        possibleMoves = possibleMoves.concat({
-                            shortNotation: `${pos}-${pos-5}`,
-                            longNotation: `${pos}-${pos-5}`,
+            const [row, col] = notationToCoords(pos);
+            for (let dy of yDirections) {
+                for (let dx of xDirections) {
+                    const dst = coordsToNotation(row + dy, col + dx);
+                    if (dst && !board[dst]) {
+                        possibleMoves.push({
+                            origin: pos,
+                            dst: dst,
+                            shortNotation: `${pos}-${dst}`,
+                            longNotation: `${pos}-${dst}`,
                             capturedPieces: []
                         });
                     }
@@ -134,8 +102,6 @@ class CheckersGame {
 
             return possibleMoves;
         }
-
-        
 
         const hasMoveByPos = (pos) => {
             return getPlayableMovesByPos(pos).length > 0;
@@ -163,123 +129,86 @@ class CheckersGame {
             return jumpMoves;
         };
 
-        const getJumpMovesByPos = (pos) => {
-            pos = parseInt(pos);
-            if (pos < 1 || pos > 32) {
-                return null;
-            }
+        const getSingleJumpsByPos = (pos) => {
+            const [row, col] = notationToCoords(pos);
+
             let jumpMoves = [];
 
             if (board[pos] && board[pos].color === this.turn) {
-                const row = Math.floor((pos - 1) / 4);
+                let xDirections = [1,-1];
+                let yDirections = [];
                 if (board[pos].color === CheckersGame.PLAYER_BLACK || board[pos].isKing) {
-                    if (row % 2 === 0) {
-                        if (pos + 9 <= 32 && pos % 4 !== 0 && board[pos + 9] === null && board[pos + 5] && board[pos + 5].color !== this.turn) {
-                            jumpMoves.push({
-                                shortNotation: `${pos}x${pos+9}`,
-                                longNotation: `${pos}x${pos+9}`,
-                                capturedPieces: [pos + 5]
-                            });
-                        }
-    
-                        if (pos + 7 <= 32 && pos % 4 !== 1 && board[pos + 7] === null && board[pos + 4] && board[pos + 4].color !== this.turn) {
-                            jumpMoves.push({
-                                shortNotation: `${pos}x${pos+7}`,
-                                longNotation: `${pos}x${pos+7}`,
-                                capturedPieces: [pos + 4]
-                            });
-                        }
-                    } else {
-                        if (pos + 9 <= 32 && pos % 4 !== 0 && board[pos + 9] === null && board[pos + 4] && board[pos + 4].color !== this.turn) {
-                            jumpMoves.push({
-                                shortNotation: `${pos}x${pos+9}`,
-                                longNotation: `${pos}x${pos+9}`,
-                                capturedPieces: [pos + 4]
-                            });
-                        }
-    
-                        if (pos + 7 <= 32 && pos % 4 !== 1 && board[pos + 7] === null && board[pos + 3] && board[pos + 3].color !== this.turn) {
-                            jumpMoves.push({
-                                shortNotation: `${pos}x${pos+7}`,
-                                longNotation: `${pos}x${pos+7}`,
-                                capturedPieces: [pos + 3]
-                            });
-                        }
-                    }
+                    yDirections.push(1);
                 }
 
                 if (board[pos].color === CheckersGame.PLAYER_WHITE || board[pos].isKing) {
-                    if (row % 2 === 1) {
-                        if (pos - 9 >= 1 && pos % 4 !== 1 && board[pos - 9] === null && board[pos - 5] && board[pos - 5].color !== this.turn) {
+                    yDirections.push(-1);
+                }
+
+                for (let dy of yDirections) {
+                    for (let dx of xDirections) {
+                        const dst = coordsToNotation(row + dy * 2, col + dx * 2);
+                        const capturedPiece = coordsToNotation(row + dy, col + dx);
+                        if (dst && capturedPiece && !board[dst] && board[capturedPiece] && board[capturedPiece].color !== board[pos].color) {
                             jumpMoves.push({
-                                shortNotation: `${pos}x${pos-9}`,
-                                longNotation: `${pos}x${pos-9}`,
-                                capturedPieces: [pos - 5]
-                            });
-                        }
-    
-                        if (pos - 7 >= 1 && pos % 4 !== 0 && board[pos - 7] === null && board[pos - 4] && board[pos - 4].color !== this.turn) {
-                            jumpMoves.push({
-                                shortNotation: `${pos}x${pos-7}`,
-                                longNotation: `${pos}x${pos-7}`,
-                                capturedPieces: [pos - 4]
-                            });
-                        }
-                    } else {
-                        if (pos - 9 >= 1 && pos % 4 !== 1 && board[pos - 9] === null && board[pos - 4] && board[pos - 4].color !== this.turn) {
-                            jumpMoves.push({
-                                shortNotation: `${pos}x${pos-9}`,
-                                longNotation: `${pos}x${pos-9}`,
-                                capturedPieces: [pos - 4]
-                            });
-                        }
-    
-                        if (pos - 7 >= 1 && pos % 4 !== 0 && board[pos - 7] === null && board[pos - 3] && board[pos - 3].color !== this.turn) {
-                            jumpMoves.push({
-                                shortNotation: `${pos}x${pos-7}`,
-                                longNotation: `${pos}x${pos-7}`,
-                                capturedPieces: [pos - 3]
-                            });
+                                origin: pos,
+                                dst: dst,
+                                shortNotation: `${pos}x${dst}`,
+                                longNotation: `${pos}x${dst}`,
+                                capturedPieces: [coordsToNotation(row + dy, col + dx)]
+                            })
                         }
                     }
                 }
             }
 
+            return jumpMoves;
+        }
+        const getJumpMovesByPos = (pos) => {
+            if (!notationToCoords(pos)) {
+                return [];
+            }
 
-            let results = [];
-            jumpMoves.forEach(jumpMove => {
-                
-                const capturedPiece = board[jumpMove.capturedPieces[0]];
-                const [origin, dst] = jumpMove.shortNotation.split('x');
+            const singleJumps = getSingleJumpsByPos(pos);
+
+            let jumpMoves = [];
+            singleJumps.forEach(jumpMove => {
+
+                const {origin, dst, capturedPieces} = jumpMove;
+
                 const jumpingPiece = board[origin];
+                const capturedPiece = board[capturedPieces[0]];
                 
-                board[jumpMove.capturedPieces[0]] = null;
+                board[capturedPieces[0]] = null;
                 board[dst] = jumpingPiece;
                 board[origin] = null;
+
                 let subJumps = getJumpMovesByPos(dst);
 
                 board[dst] = null;
                 board[origin] = jumpingPiece;
-                board[jumpMove.capturedPieces[0]] = capturedPiece;
+                board[capturedPieces[0]] = capturedPiece;
 
                 if (subJumps.length > 0) {
                     subJumps.forEach(subJump => {
-                        results.push({
-                            shortNotation: `${origin}x${subJump.shortNotation.split('x').slice(-1)[0]}`,
+                        jumpMoves.push({
+                            origin: origin,
+                            dst: subJump.dst,
+                            shortNotation: `${origin}x${subJump.dst}`,
                             longNotation: `${origin}x${subJump.longNotation}`,
-                            capturedPieces: jumpMove.capturedPieces.concat(subJump.capturedPieces)
+                            capturedPieces: capturedPieces.concat(subJump.capturedPieces)
                         });
                     });
                 } else {
-                    results.push(jumpMove);
+                    jumpMoves.push(jumpMove);
                 }
             });
 
-            return results;
+            return jumpMoves;
         };
 
-
         this.getPlayableMovesByPosition = (pos) => getPlayableMovesByPos(pos);
+
         this.getPlayableMoves = () => {
             let res = [];
             for (let i = 1; i <= 32; i++) {
@@ -390,7 +319,6 @@ class CheckersGame {
             }
 
             let [turn, p1Pieces, p2Pieces] = fen.split(':');
-            turn = turn.toLowerCase();
             p1Pieces = p1Pieces.split(',');
             p1Pieces = p1Pieces.map(p => p.toLowerCase()).map((p, i, arr) => i == 0 ? p : arr[0].charAt(0) + p);
             p2Pieces = p2Pieces.split(',');
@@ -399,23 +327,25 @@ class CheckersGame {
             p1Pieces.concat(p2Pieces).forEach(piece => {
                 const color = piece.charAt(0) == 'b' ? CheckersGame.PLAYER_BLACK : CheckersGame.PLAYER_WHITE;
                 piece = piece.substring(1);
+                if (!piece) {
+                    return;
+                }
 
                 const isKing = piece.charAt(0) == 'k';
                 if (isKing) {
                     piece = piece.substring(1);
                 }
 
-
                 const pos = parseInt(piece);
-                if (pos === NaN) {
-                    throw 'Invalid FEN format';
+                if (Number.isNaN(pos)) {
+                    throw `Invalid FEN format. ${fen}`;
                 }
 
                 board[pos] = new Piece(color);
                 board[pos].isKing = isKing;
             });
 
-            this.turn = turn == 'b' ? CheckersGame.PLAYER_BLACK : CheckersGame.PLAYER_WHITE;
+            this.turn = turn.toLowerCase() == 'b' ? CheckersGame.PLAYER_BLACK : CheckersGame.PLAYER_WHITE;
 
         }
 
@@ -441,16 +371,7 @@ class CheckersGame {
         }
 
         this.getFen = getFen;
-        this.start = () => {
-            this.whitePieceCount = CheckersGame.STARTING_PIECE_COUNT_PER_PLAYER;
-            this.blackPieceCount = CheckersGame.STARTING_PIECE_COUNT_PER_PLAYER;
-            this.whitePiecesInStartingPosition = true;
-            this.blackPiecesInStartingPosition = true;
-            this.turn = CheckersGame.PLAYER_BLACK;
-        }
     }
-
-
 }
 
 module.exports = CheckersGame;

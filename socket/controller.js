@@ -74,7 +74,7 @@ const joinGame = (socket, io) => async ({id, color}) => {
 
                 let checkersGame = new CheckersGame();
                 const completedMoves = game.moves || [];
-                checkersGame.start();
+
                 completedMoves.forEach(moveJSON => {
                     const move = JSON.parse(moveJSON);
                     const [src, dst] = move.shortNotation.split(/x|-/);
@@ -95,9 +95,6 @@ const joinGame = (socket, io) => async ({id, color}) => {
 
     } else if (game.vsCpu && playerCount === 1) {
         const checkersGame = new CheckersGame();
-        checkersGame.start();
-
-
         const moveOptions = checkersGame.getPlayableMoves();
         
         let playerColor;
@@ -195,7 +192,6 @@ const joinGame = (socket, io) => async ({id, color}) => {
     } else if (!game.vsCpu && playerCount === 2) {
 
         const checkersGame = new CheckersGame();
-        checkersGame.start();
         try {
             await Game.updateOne({_id: id}, {gameState: 'in_progress'});
         } catch (error) {
@@ -393,7 +389,6 @@ const makeMove = (socket, io) => async ({move, id}) => {
     }
 
     let game = new CheckersGame();
-    game.start();
     gameRecord.moves.forEach(moveJSON => {
         const move = JSON.parse(moveJSON);
         const [src, dst] = move.shortNotation.split(/x|-/);

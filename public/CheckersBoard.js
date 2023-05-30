@@ -55,7 +55,6 @@ class CheckersBoard extends HTMLElement{
         this.createDiv(div);
 
         this.drawBoard();
-        this.game.start();
     }
 
     toggleNumbers() {

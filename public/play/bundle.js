@@ -220,7 +220,6 @@ var CheckersBoard = /*#__PURE__*/function (_HTMLElement) {
     var div = document.createElement("div");
     _this.createDiv(div);
     _this.drawBoard();
-    _this.game.start();
     return _this;
   }
   _createClass(CheckersBoard, [{
@@ -426,6 +425,7 @@ module.exports = CheckersBoard;
 "use strict";
 
 function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (obj) { return typeof obj; } : function (obj) { return obj && "function" == typeof Symbol && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }, _typeof(obj); }
+function _createForOfIteratorHelper(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e2) { throw _e2; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e3) { didErr = true; err = _e3; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
 function _slicedToArray(arr, i) { return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _unsupportedIterableToArray(arr, i) || _nonIterableRest(); }
 function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
 function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
@@ -439,12 +439,10 @@ function _defineProperty(obj, key, value) { key = _toPropertyKey(key); if (key i
 function _toPropertyKey(arg) { var key = _toPrimitive(arg, "string"); return _typeof(key) === "symbol" ? key : String(key); }
 function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input === null) return input; var prim = input[Symbol.toPrimitive]; if (prim !== undefined) { var res = prim.call(input, hint || "default"); if (_typeof(res) !== "object") return res; throw new TypeError("@@toPrimitive must return a primitive value."); } return (hint === "string" ? String : Number)(input); }
 var Piece = require('./Piece');
-
-//import {Piece } from "./Piece.js";
 var CheckersGame = /*#__PURE__*/_createClass(function CheckersGame() {
   var _this = this;
   _classCallCheck(this, CheckersGame);
-  this.players = new Array(CheckersGame.NUM_PLAYERS);
+  this.turn = CheckersGame.PLAYER_BLACK;
   var board = {};
   var stateStack = [];
   for (var i = 1; i <= 32; i++) {
@@ -456,6 +454,21 @@ var CheckersGame = /*#__PURE__*/_createClass(function CheckersGame() {
       board["" + i] = new Piece("w");
     }
   }
+  var notationToCoords = function notationToCoords(num) {
+    num = parseInt(num);
+    if (typeof num !== 'number' || Number.isNaN(num) || num > 32 || num < 1) {
+      return undefined;
+    }
+    var row = Math.floor((num - 1) / 4);
+    var col = row % 2 === 0 ? 1 + (num - 1) % 4 * 2 : (num - 1) % 4 * 2;
+    return [row, col];
+  };
+  var coordsToNotation = function coordsToNotation(row, col) {
+    if (row < 0 || row >= 8 || col < 0 || col >= 8 || row % 2 === col % 2) {
+      return undefined;
+    }
+    return row * 4 + Math.floor(col / 2) + 1;
+  };
   var getFen = function getFen() {
     var whitePieces = [];
     var blackPieces = [];
@@ -477,7 +490,7 @@ var CheckersGame = /*#__PURE__*/_createClass(function CheckersGame() {
     var possibleJumps = getPlayableJumpMoves();
     if (possibleJumps.length > 0) {
       return possibleJumps.filter(function (jumpMove) {
-        return jumpMove.shortNotation.split("x")[0] == pos;
+        return jumpMove.origin == pos;
       });
     }
     var possibleMoves = [];
@@ -485,72 +498,43 @@ var CheckersGame = /*#__PURE__*/_createClass(function CheckersGame() {
     if (!movingPiece || movingPiece.color != _this.turn) {
       return [];
     }
+    var yDirections = [];
+    var xDirections = [-1, 1];
     if (movingPiece.color === CheckersGame.PLAYER_BLACK || movingPiece.isKing) {
-      var row = Math.floor((pos - 1) / 4);
-      if (row % 2 === 0) {
-        if (pos + 4 <= 32 && board[pos + 4] === null) {
-          possibleMoves = possibleMoves.concat({
-            shortNotation: "".concat(pos, "-").concat(pos + 4),
-            longNotation: "".concat(pos, "-").concat(pos + 4),
-            capturedPieces: []
-          });
-        }
-        if (pos + 5 <= 32 && pos % 8 !== 4 && board[pos + 5] === null) {
-          possibleMoves = possibleMoves.concat({
-            shortNotation: "".concat(pos, "-").concat(pos + 5),
-            longNotation: "".concat(pos, "-").concat(pos + 5),
-            capturedPieces: []
-          });
-        }
-      } else {
-        if (pos + 4 <= 32 && board[pos + 4] === null) {
-          possibleMoves = possibleMoves.concat({
-            shortNotation: "".concat(pos, "-").concat(pos + 4),
-            longNotation: "".concat(pos, "-").concat(pos + 4),
-            capturedPieces: []
-          });
-        }
-        if (pos + 3 <= 32 && pos % 8 !== 5 && board[pos + 3] === null) {
-          possibleMoves = possibleMoves.concat({
-            shortNotation: "".concat(pos, "-").concat(pos + 3),
-            longNotation: "".concat(pos, "-").concat(pos + 3),
-            capturedPieces: []
-          });
-        }
-      }
+      yDirections.push(1);
     }
     if (movingPiece.color === CheckersGame.PLAYER_WHITE || movingPiece.isKing) {
-      var _row = Math.floor((pos - 1) / 4);
-      if (_row % 2 === 0) {
-        if (pos - 4 >= 1 && board[pos - 4] === null) {
-          possibleMoves = possibleMoves.concat({
-            shortNotation: "".concat(pos, "-").concat(pos - 4),
-            longNotation: "".concat(pos, "-").concat(pos - 4),
-            capturedPieces: []
-          });
+      yDirections.push(-1);
+    }
+    if (notationToCoords(pos) === undefined) {
+      throw "Invalid piece position ".concat(pos);
+    }
+    var _notationToCoords = notationToCoords(pos),
+      _notationToCoords2 = _slicedToArray(_notationToCoords, 2),
+      row = _notationToCoords2[0],
+      col = _notationToCoords2[1];
+    for (var _i2 = 0, _yDirections = yDirections; _i2 < _yDirections.length; _i2++) {
+      var dy = _yDirections[_i2];
+      var _iterator = _createForOfIteratorHelper(xDirections),
+        _step;
+      try {
+        for (_iterator.s(); !(_step = _iterator.n()).done;) {
+          var dx = _step.value;
+          var dst = coordsToNotation(row + dy, col + dx);
+          if (dst && !board[dst]) {
+            possibleMoves.push({
+              origin: pos,
+              dst: dst,
+              shortNotation: "".concat(pos, "-").concat(dst),
+              longNotation: "".concat(pos, "-").concat(dst),
+              capturedPieces: []
+            });
+          }
         }
-        if (pos - 3 >= 1 && pos % 8 !== 4 && board[pos - 3] === null) {
-          possibleMoves = possibleMoves.concat({
-            shortNotation: "".concat(pos, "-").concat(pos - 3),
-            longNotation: "".concat(pos, "-").concat(pos - 3),
-            capturedPieces: []
-          });
-        }
-      } else {
-        if (pos - 4 >= 1 && board[pos - 4] === null) {
-          possibleMoves = possibleMoves.concat({
-            shortNotation: "".concat(pos, "-").concat(pos - 4),
-            longNotation: "".concat(pos, "-").concat(pos - 4),
-            capturedPieces: []
-          });
-        }
-        if (pos - 5 >= 1 && pos % 8 !== 5 && board[pos - 5] === null) {
-          possibleMoves = possibleMoves.concat({
-            shortNotation: "".concat(pos, "-").concat(pos - 5),
-            longNotation: "".concat(pos, "-").concat(pos - 5),
-            capturedPieces: []
-          });
-        }
+      } catch (err) {
+        _iterator.e(err);
+      } finally {
+        _iterator.f();
       }
     }
     return possibleMoves;
@@ -576,117 +560,91 @@ var CheckersGame = /*#__PURE__*/_createClass(function CheckersGame() {
     }
     return jumpMoves;
   };
-  var getJumpMovesByPos = function getJumpMovesByPos(pos) {
-    pos = parseInt(pos);
-    if (pos < 1 || pos > 32) {
-      return null;
-    }
+  var getSingleJumpsByPos = function getSingleJumpsByPos(pos) {
+    var _notationToCoords3 = notationToCoords(pos),
+      _notationToCoords4 = _slicedToArray(_notationToCoords3, 2),
+      row = _notationToCoords4[0],
+      col = _notationToCoords4[1];
     var jumpMoves = [];
     if (board[pos] && board[pos].color === _this.turn) {
-      var row = Math.floor((pos - 1) / 4);
+      var xDirections = [1, -1];
+      var yDirections = [];
       if (board[pos].color === CheckersGame.PLAYER_BLACK || board[pos].isKing) {
-        if (row % 2 === 0) {
-          if (pos + 9 <= 32 && pos % 4 !== 0 && board[pos + 9] === null && board[pos + 5] && board[pos + 5].color !== _this.turn) {
-            jumpMoves.push({
-              shortNotation: "".concat(pos, "x").concat(pos + 9),
-              longNotation: "".concat(pos, "x").concat(pos + 9),
-              capturedPieces: [pos + 5]
-            });
-          }
-          if (pos + 7 <= 32 && pos % 4 !== 1 && board[pos + 7] === null && board[pos + 4] && board[pos + 4].color !== _this.turn) {
-            jumpMoves.push({
-              shortNotation: "".concat(pos, "x").concat(pos + 7),
-              longNotation: "".concat(pos, "x").concat(pos + 7),
-              capturedPieces: [pos + 4]
-            });
-          }
-        } else {
-          if (pos + 9 <= 32 && pos % 4 !== 0 && board[pos + 9] === null && board[pos + 4] && board[pos + 4].color !== _this.turn) {
-            jumpMoves.push({
-              shortNotation: "".concat(pos, "x").concat(pos + 9),
-              longNotation: "".concat(pos, "x").concat(pos + 9),
-              capturedPieces: [pos + 4]
-            });
-          }
-          if (pos + 7 <= 32 && pos % 4 !== 1 && board[pos + 7] === null && board[pos + 3] && board[pos + 3].color !== _this.turn) {
-            jumpMoves.push({
-              shortNotation: "".concat(pos, "x").concat(pos + 7),
-              longNotation: "".concat(pos, "x").concat(pos + 7),
-              capturedPieces: [pos + 3]
-            });
-          }
-        }
+        yDirections.push(1);
       }
       if (board[pos].color === CheckersGame.PLAYER_WHITE || board[pos].isKing) {
-        if (row % 2 === 1) {
-          if (pos - 9 >= 1 && pos % 4 !== 1 && board[pos - 9] === null && board[pos - 5] && board[pos - 5].color !== _this.turn) {
-            jumpMoves.push({
-              shortNotation: "".concat(pos, "x").concat(pos - 9),
-              longNotation: "".concat(pos, "x").concat(pos - 9),
-              capturedPieces: [pos - 5]
-            });
+        yDirections.push(-1);
+      }
+      for (var _i3 = 0, _yDirections2 = yDirections; _i3 < _yDirections2.length; _i3++) {
+        var dy = _yDirections2[_i3];
+        var _iterator2 = _createForOfIteratorHelper(xDirections),
+          _step2;
+        try {
+          for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
+            var dx = _step2.value;
+            var dst = coordsToNotation(row + dy * 2, col + dx * 2);
+            var capturedPiece = coordsToNotation(row + dy, col + dx);
+            if (dst && capturedPiece && !board[dst] && board[capturedPiece] && board[capturedPiece].color !== board[pos].color) {
+              jumpMoves.push({
+                origin: pos,
+                dst: dst,
+                shortNotation: "".concat(pos, "x").concat(dst),
+                longNotation: "".concat(pos, "x").concat(dst),
+                capturedPieces: [coordsToNotation(row + dy, col + dx)]
+              });
+            }
           }
-          if (pos - 7 >= 1 && pos % 4 !== 0 && board[pos - 7] === null && board[pos - 4] && board[pos - 4].color !== _this.turn) {
-            jumpMoves.push({
-              shortNotation: "".concat(pos, "x").concat(pos - 7),
-              longNotation: "".concat(pos, "x").concat(pos - 7),
-              capturedPieces: [pos - 4]
-            });
-          }
-        } else {
-          if (pos - 9 >= 1 && pos % 4 !== 1 && board[pos - 9] === null && board[pos - 4] && board[pos - 4].color !== _this.turn) {
-            jumpMoves.push({
-              shortNotation: "".concat(pos, "x").concat(pos - 9),
-              longNotation: "".concat(pos, "x").concat(pos - 9),
-              capturedPieces: [pos - 4]
-            });
-          }
-          if (pos - 7 >= 1 && pos % 4 !== 0 && board[pos - 7] === null && board[pos - 3] && board[pos - 3].color !== _this.turn) {
-            jumpMoves.push({
-              shortNotation: "".concat(pos, "x").concat(pos - 7),
-              longNotation: "".concat(pos, "x").concat(pos - 7),
-              capturedPieces: [pos - 3]
-            });
-          }
+        } catch (err) {
+          _iterator2.e(err);
+        } finally {
+          _iterator2.f();
         }
       }
     }
-    var results = [];
-    jumpMoves.forEach(function (jumpMove) {
-      var capturedPiece = board[jumpMove.capturedPieces[0]];
-      var _jumpMove$shortNotati = jumpMove.shortNotation.split('x'),
-        _jumpMove$shortNotati2 = _slicedToArray(_jumpMove$shortNotati, 2),
-        origin = _jumpMove$shortNotati2[0],
-        dst = _jumpMove$shortNotati2[1];
+    return jumpMoves;
+  };
+  var getJumpMovesByPos = function getJumpMovesByPos(pos) {
+    if (!notationToCoords(pos)) {
+      return [];
+    }
+    var singleJumps = getSingleJumpsByPos(pos);
+    var jumpMoves = [];
+    singleJumps.forEach(function (jumpMove) {
+      var origin = jumpMove.origin,
+        dst = jumpMove.dst,
+        capturedPieces = jumpMove.capturedPieces;
       var jumpingPiece = board[origin];
-      board[jumpMove.capturedPieces[0]] = null;
+      var capturedPiece = board[capturedPieces[0]];
+      board[capturedPieces[0]] = null;
       board[dst] = jumpingPiece;
       board[origin] = null;
       var subJumps = getJumpMovesByPos(dst);
       board[dst] = null;
       board[origin] = jumpingPiece;
-      board[jumpMove.capturedPieces[0]] = capturedPiece;
+      board[capturedPieces[0]] = capturedPiece;
       if (subJumps.length > 0) {
         subJumps.forEach(function (subJump) {
-          results.push({
-            shortNotation: "".concat(origin, "x").concat(subJump.shortNotation.split('x').slice(-1)[0]),
+          jumpMoves.push({
+            origin: origin,
+            dst: subJump.dst,
+            shortNotation: "".concat(origin, "x").concat(subJump.dst),
             longNotation: "".concat(origin, "x").concat(subJump.longNotation),
-            capturedPieces: jumpMove.capturedPieces.concat(subJump.capturedPieces)
+            capturedPieces: capturedPieces.concat(subJump.capturedPieces)
           });
         });
       } else {
-        results.push(jumpMove);
+        jumpMoves.push(jumpMove);
       }
     });
-    return results;
+    return jumpMoves;
   };
   this.getPlayableMovesByPosition = function (pos) {
     return getPlayableMovesByPos(pos);
   };
   this.getPlayableMoves = function () {
     var res = [];
-    for (var _i2 = 1; _i2 <= 32; _i2++) {
-      res = res.concat(getPlayableMovesByPos(_i2));
+    for (var _i4 = 1; _i4 <= 32; _i4++) {
+      res = res.concat(getPlayableMovesByPos(_i4));
     }
     return res;
   };
@@ -777,15 +735,14 @@ var CheckersGame = /*#__PURE__*/_createClass(function CheckersGame() {
     return false;
   };
   this.constructFromFen = function (fen) {
-    for (var _i3 = 1; _i3 <= 32; _i3++) {
-      board[_i3] = null;
+    for (var _i5 = 1; _i5 <= 32; _i5++) {
+      board[_i5] = null;
     }
     var _fen$split = fen.split(':'),
       _fen$split2 = _slicedToArray(_fen$split, 3),
       turn = _fen$split2[0],
       p1Pieces = _fen$split2[1],
       p2Pieces = _fen$split2[2];
-    turn = turn.toLowerCase();
     p1Pieces = p1Pieces.split(',');
     p1Pieces = p1Pieces.map(function (p) {
       return p.toLowerCase();
@@ -801,18 +758,21 @@ var CheckersGame = /*#__PURE__*/_createClass(function CheckersGame() {
     p1Pieces.concat(p2Pieces).forEach(function (piece) {
       var color = piece.charAt(0) == 'b' ? CheckersGame.PLAYER_BLACK : CheckersGame.PLAYER_WHITE;
       piece = piece.substring(1);
+      if (!piece) {
+        return;
+      }
       var isKing = piece.charAt(0) == 'k';
       if (isKing) {
         piece = piece.substring(1);
       }
       var pos = parseInt(piece);
-      if (pos === NaN) {
-        throw 'Invalid FEN format';
+      if (Number.isNaN(pos)) {
+        throw "Invalid FEN format. ".concat(fen);
       }
       board[pos] = new Piece(color);
       board[pos].isKing = isKing;
     });
-    _this.turn = turn == 'b' ? CheckersGame.PLAYER_BLACK : CheckersGame.PLAYER_WHITE;
+    _this.turn = turn.toLowerCase() == 'b' ? CheckersGame.PLAYER_BLACK : CheckersGame.PLAYER_WHITE;
   };
   this.undoLastMove = function () {
     if (stateStack.length == 0) {
@@ -830,16 +790,7 @@ var CheckersGame = /*#__PURE__*/_createClass(function CheckersGame() {
     }
   };
   this.getFen = getFen;
-  this.start = function () {
-    _this.whitePieceCount = CheckersGame.STARTING_PIECE_COUNT_PER_PLAYER;
-    _this.blackPieceCount = CheckersGame.STARTING_PIECE_COUNT_PER_PLAYER;
-    _this.whitePiecesInStartingPosition = true;
-    _this.blackPiecesInStartingPosition = true;
-    _this.turn = CheckersGame.PLAYER_BLACK;
-  };
 });
-_defineProperty(CheckersGame, "STARTING_PIECE_COUNT_PER_PLAYER", 12);
-_defineProperty(CheckersGame, "NUM_PLAYERS", 2);
 _defineProperty(CheckersGame, "PLAYER_WHITE", 'w');
 _defineProperty(CheckersGame, "PLAYER_BLACK", 'b');
 module.exports = CheckersGame;

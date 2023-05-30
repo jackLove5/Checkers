@@ -10,7 +10,6 @@ let socket = io.connect("/", {
 registerChallengeHandlers(socket);
 
 const analyzeGame = new CheckersGame();
-analyzeGame.start();
 const initialFen = analyzeGame.getFen();
 const ai = new CheckersAi(analyzeGame);
 
@@ -43,7 +42,6 @@ window.addEventListener('load', async (e) => {
     let states = [];
 
     const game = new CheckersGame();
-    game.start();
     moves.forEach((move) => {
         const [src, dst] = move.shortNotation.split(/-|x/);
         game.doMove(src, dst, move.longNotation);

@@ -8,19 +8,10 @@ test('Should be able to create a Checkers game', () => {
     expect(game).toBeTruthy();
 });
 
-test('Checkers game should allow exactly 2 players', () => {
-    const game = new CheckersGame();
-    expect(game.players.length).toBe(2);
-});
-
-test('Should be able to start a new game', () => {
-    const game = new CheckersGame();
-    game.start();
-});
 
 test('White should have 12 pieces at the start of a new game', () => {
     const game = new CheckersGame();
-    game.start();
+    
     let whitePieceCount = 0;
     for (let i = 1; i <= 32; i++) {
         const piece = game.getPieceAtPosition(i);
@@ -33,7 +24,7 @@ test('White should have 12 pieces at the start of a new game', () => {
 
 test('Black should have 12 pieces at the start of a new game', () => {
     const game = new CheckersGame();
-    game.start();
+    
     let blackPieceCount = 0;
     for (let i = 1; i <= 32; i++) {
         const piece = game.getPieceAtPosition(i);
@@ -46,33 +37,33 @@ test('Black should have 12 pieces at the start of a new game', () => {
 
 test('Black must be able to make a move at the beginning of a new game', () => {
     const game = new CheckersGame();
-    game.start();
+    
     game.doMove("10", "15");
 });
 
 test('White must not be able to make a move at the beginning of a new game', () => {
     const game = new CheckersGame();
-    game.start();
+    
     expect(() => game.doMove("22", "18")).toThrow();
 });
 
 test('White must be able to make a move after black', () => {
     const game = new CheckersGame();
-    game.start();
+    
     game.doMove("9", "14");
     expect(() => game.doMove("23", "19")).not.toThrow();
 });
 
 test('Black must not be able to move twice before white', () => {
     const game = new CheckersGame();
-    game.start();
+    
     game.doMove("10", "14");
     expect(() => game.doMove("11", "15")).toThrow();
 });
 
 test('White must not be able to move twice before Black', () => {
     const game = new CheckersGame();
-    game.start();
+    
     game.doMove("11", "15");
     game.doMove("22", "17");
     expect(() => game.doMove()).toThrow();
@@ -80,7 +71,7 @@ test('White must not be able to move twice before Black', () => {
 
 test('Black must be able to move after white', () => {
     const game = new CheckersGame();
-    game.start();
+    
     game.doMove("9", "13");
     game.doMove("24", "20");
     expect(() => game.doMove("11", "16")).not.toThrow();
@@ -96,21 +87,21 @@ test('Black must be able to move after white', () => {
 test('After starting a new game, there should be a regular black piece at position 1 on the game board', () => {
     const blackPiece = new Piece('b');
     const game = new CheckersGame();
-    game.start();
+    
     expect(game.getPieceAtPosition("1")).toEqual(blackPiece);
 });
 
 test('After starting a new game, there should be a regular black piece at position 2 on the game board', () => {
     const blackPiece = new Piece('b');
     const game = new CheckersGame();
-    game.start();
+    
     expect(game.getPieceAtPosition("2")).toEqual(blackPiece);
 });
 
 test('After starting a new game, there should be a regular black piece at position 3 on the game board', () => {
     const blackPiece = new Piece('b');
     const game = new CheckersGame();
-    game.start();
+    
     expect(game.getPieceAtPosition("3")).toEqual(blackPiece);
 });
 
@@ -118,7 +109,7 @@ test('After starting a new game, there should be a regular black piece at positi
 test('After starting a new game, there should be a regular black piece at position 4 on the game board', () => {
     const blackPiece = new Piece('b');
     const game = new CheckersGame();
-    game.start();
+    
     expect(game.getPieceAtPosition("4")).toEqual(blackPiece);
 });
 
@@ -126,7 +117,7 @@ test('After starting a new game, there should be a regular black piece at positi
 test('After starting a new game, there should be a regular black piece at position 5 on the game board', () => {
     const blackPiece = new Piece('b');
     const game = new CheckersGame();
-    game.start();
+    
     expect(game.getPieceAtPosition("5")).toEqual(blackPiece);
 });
 
@@ -134,7 +125,7 @@ test('After starting a new game, there should be a regular black piece at positi
 test('After starting a new game, there should be a regular black piece at position 6 on the game board', () => {
     const blackPiece = new Piece('b');
     const game = new CheckersGame();
-    game.start();
+    
     expect(game.getPieceAtPosition("6")).toEqual(blackPiece);
 });
 
@@ -142,7 +133,7 @@ test('After starting a new game, there should be a regular black piece at positi
 test('After starting a new game, there should be a regular black piece at position 7 on the game board', () => {
     const blackPiece = new Piece('b');
     const game = new CheckersGame();
-    game.start();
+    
     expect(game.getPieceAtPosition("7")).toEqual(blackPiece);
 });
 
@@ -150,7 +141,7 @@ test('After starting a new game, there should be a regular black piece at positi
 test('After starting a new game, there should be a regular black piece at position 8 on the game board', () => {
     const blackPiece = new Piece('b');
     const game = new CheckersGame();
-    game.start();
+    
     expect(game.getPieceAtPosition("8")).toEqual(blackPiece);
 });
 
@@ -158,7 +149,7 @@ test('After starting a new game, there should be a regular black piece at positi
 test('After starting a new game, there should be a regular black piece at position 9 on the game board', () => {
     const blackPiece = new Piece('b');
     const game = new CheckersGame();
-    game.start();
+    
     expect(game.getPieceAtPosition("9")).toEqual(blackPiece);
 });
 
@@ -166,7 +157,7 @@ test('After starting a new game, there should be a regular black piece at positi
 test('After starting a new game, there should be a regular black piece at position 10 on the game board', () => {
     const blackPiece = new Piece('b');
     const game = new CheckersGame();
-    game.start();
+    
     expect(game.getPieceAtPosition("10")).toEqual(blackPiece);
 });
 
@@ -174,7 +165,7 @@ test('After starting a new game, there should be a regular black piece at positi
 test('After starting a new game, there should be a regular black piece at position 11 on the game board', () => {
     const blackPiece = new Piece('b');
     const game = new CheckersGame();
-    game.start();
+    
     expect(game.getPieceAtPosition("11")).toEqual(blackPiece);
 });
 
@@ -182,112 +173,112 @@ test('After starting a new game, there should be a regular black piece at positi
 test('After starting a new game, there should be a regular black piece at position 12 on the game board', () => {
     const blackPiece = new Piece('b');
     const game = new CheckersGame();
-    game.start();
+    
     expect(game.getPieceAtPosition("12")).toEqual(blackPiece);
 });
 
 
 test('After starting a new game, there should be no piece at position 13 on the game board', () => {
     const game = new CheckersGame();
-    game.start();
+    
     expect(game.getPieceAtPosition("13")).toBeNull();
 });
 
 test('After starting a new game, there should be no piece at position 14 on the game board', () => {
     const game = new CheckersGame();
-    game.start();
+    
     expect(game.getPieceAtPosition("14")).toBeNull();
 });
 
 test('After starting a new game, there should be no piece at position 15 on the game board', () => {
     const game = new CheckersGame();
-    game.start();
+    
     expect(game.getPieceAtPosition("15")).toBeNull();
 });
 
 test('After starting a new game, there should be no piece at position 16 on the game board', () => {
     const game = new CheckersGame();
-    game.start();
+    
     expect(game.getPieceAtPosition("16")).toBeNull();
 });
 
 test('After starting a new game, there should be no piece at position 17 on the game board', () => {
     const game = new CheckersGame();
-    game.start();
+    
     expect(game.getPieceAtPosition("17")).toBeNull();
 });
 
 test('After starting a new game, there should be no piece at position 18 on the game board', () => {
     const game = new CheckersGame();
-    game.start();
+    
     expect(game.getPieceAtPosition("18")).toBeNull();
 });
 
 test('After starting a new game, there should be no piece at position 19 on the game board', () => {
     const game = new CheckersGame();
-    game.start();
+    
     expect(game.getPieceAtPosition("19")).toBeNull();
 });
 
 test('After starting a new game, there should be no piece at position 20 on the game board', () => {
     const game = new CheckersGame();
-    game.start();
+    
     expect(game.getPieceAtPosition("20")).toBeNull();
 });
 
 test('After starting a new game, there should be a regular white piece at position 21 on the game board', () => {
     const whitePiece = new Piece('w');
     const game = new CheckersGame();
-    game.start();
+    
     expect(game.getPieceAtPosition("21")).toEqual(whitePiece);
 });
 
 test('After starting a new game, there should be a regular white piece at position 22 on the game board', () => {
     const whitePiece = new Piece('w');
     const game = new CheckersGame();
-    game.start();
+    
     expect(game.getPieceAtPosition("22")).toEqual(whitePiece);
 });
 
 test('After starting a new game, there should be a regular white piece at position 23 on the game board', () => {
     const whitePiece = new Piece('w');
     const game = new CheckersGame();
-    game.start();
+    
     expect(game.getPieceAtPosition("23")).toEqual(whitePiece);
 });
 
 test('After starting a new game, there should be a regular white piece at position 24 on the game board', () => {
     const whitePiece = new Piece('w');
     const game = new CheckersGame();
-    game.start();
+    
     expect(game.getPieceAtPosition("24")).toEqual(whitePiece);
 });
 
 test('After starting a new game, there should be a regular white piece at position 25 on the game board', () => {
     const whitePiece = new Piece('w');
     const game = new CheckersGame();
-    game.start();
+    
     expect(game.getPieceAtPosition("25")).toEqual(whitePiece);
 });
 
 test('After starting a new game, there should be a regular white piece at position 26 on the game board', () => {
     const whitePiece = new Piece('w');
     const game = new CheckersGame();
-    game.start();
+    
     expect(game.getPieceAtPosition("26")).toEqual(whitePiece);
 });
 
 test('After starting a new game, there should be a regular white piece at position 27 on the game board', () => {
     const whitePiece = new Piece('w');
     const game = new CheckersGame();
-    game.start();
+    
     expect(game.getPieceAtPosition("27")).toEqual(whitePiece);
 });
 
 test('After starting a new game, there should be a regular white piece at position 28 on the game board', () => {
     const whitePiece = new Piece('w');
     const game = new CheckersGame();
-    game.start();
+    
     expect(game.getPieceAtPosition("28")).toEqual(whitePiece);
 });
 
@@ -295,34 +286,34 @@ test('After starting a new game, there should be a regular white piece at positi
 test('After starting a new game, there should be a regular white piece at position 29 on the game board', () => {
     const whitePiece = new Piece('w');
     const game = new CheckersGame();
-    game.start();
+    
     expect(game.getPieceAtPosition("29")).toEqual(whitePiece);
 });
 
 test('After starting a new game, there should be a regular white piece at position 30 on the game board', () => {
     const whitePiece = new Piece('w');
     const game = new CheckersGame();
-    game.start();
+    
     expect(game.getPieceAtPosition("30")).toEqual(whitePiece);
 });
 
 test('After starting a new game, there should be a regular white piece at position 31 on the game board', () => {
     const whitePiece = new Piece('w');
     const game = new CheckersGame();
-    game.start();
+    
     expect(game.getPieceAtPosition("31")).toEqual(whitePiece);
 });
 
 test('After starting a new game, there should be a regular white piece at position 32 on the game board', () => {
     const whitePiece = new Piece('w');
     const game = new CheckersGame();
-    game.start();
+    
     expect(game.getPieceAtPosition("32")).toEqual(whitePiece);
 });
 
 test("The game's board must not be accessible", () => {
     const game = new CheckersGame();
-    game.start();
+    
     expect(() => { game.board["32"] = null }).toThrow();
 });
 
@@ -332,80 +323,80 @@ test("The game's board must not be accessible", () => {
 */
 test("Black must not be able to play the move 10-11", () => {
     const game = new CheckersGame();
-    game.start();
+    
     expect(() => game.doMove("10", "11")).toThrow();
 });
 
 test("White must not be able to play the move 12-21", () => {
     const game = new CheckersGame();
-    game.start();
+    
     game.doMove("9", "13");
     expect(() => game.doMove("122", "21")).toThrow();
 });
 
 test("Black must not be able to play the move 9-6", () => {
     const game = new CheckersGame();
-    game.start();
+    
     expect(() => game.doMove("9", "6")).toThrow();
 });
 
 test("White must not be able to play the move 27-19", () => {
     const game = new CheckersGame();
-    game.start();
+    
     game.doMove("9", "13");
     expect(() => game.doMove("27", "19")).toThrow();
 });
 
 test("White must not be able to play the move 26-24", () => {
     const game = new CheckersGame();
-    game.start();
+    
     game.doMove("9", "13");
     expect(() => game.doMove("26", "24")).toThrow();
 });
 
 test("White must not be able to play the move 23-20", () => {
     const game = new CheckersGame();
-    game.start();
+    
     game.doMove("9", "13");
     expect(() => game.doMove("23", "20")).toThrow();
 });
 
 test("White must not be able to play the move 28-25", () => {
     const game = new CheckersGame();
-    game.start();
+    
     game.doMove("9", "13");
     expect(() => game.doMove("28", "25")).toThrow();
 });
 
 test("White must not be able to play the move 21-16", () => {
     const game = new CheckersGame();
-    game.start();
+    
     game.doMove("9", "13");
     expect(() => game.doMove("21", "16")).toThrow();
 })
 
 test("Black must not be able to play the move 12-13", () => {
     const game = new CheckersGame();
-    game.start();
+    
     expect(() => game.doMove("12", "13")).toThrow();
 });
 
 
 test("Black must not be able to play the move 12-17", () => {
     const game = new CheckersGame();
-    game.start();
+    
     expect(() => game.doMove("12", "17")).toThrow();
 });
 
 test("Black must not be able to play the move 13-16", () => {
     const game = new CheckersGame();
-    game.start();
+    
     expect(() => game.doMove("13", "16")).toThrow();
 });
 
 test("Black must be able to play the move 12-16", () => {
     const game = new CheckersGame();
-    game.start();
+    
     expect(() => game.doMove("12", "16")).not.toThrow();
 });
 
@@ -415,18 +406,18 @@ test("Black must be able to play the move 12-16", () => {
 */
 test("Black must not be able to play the move 3-7", () => {
     const game = new CheckersGame();
-    game.start();
+    
     expect(() => game.doMove("3", "7")).toThrow();
 });
 test("Black must not be able to play the move 5-9", () => {
     const game = new CheckersGame();
-    game.start();
+    
     expect(() => game.doMove("5", "9")).toThrow();
 });
 
 test("White must not be able to play the move 31-27", () => {
     const game = new CheckersGame();
-    game.start();
+    
     game.doMove("10", "15");
     expect(() => game.doMove("31", "27")).toThrow();
 });
@@ -436,7 +427,7 @@ test("White must not be able to play the move 31-27", () => {
 */
 test("position 10 should be empty after the move 10-15", () => {
     const game = new CheckersGame();
-    game.start();
+    
     game.doMove("10", "15");
     expect(game.getPieceAtPosition("10")).toBeNull();
 });
@@ -444,33 +435,33 @@ test("position 10 should be empty after the move 10-15", () => {
 test("position 15 should have black piece after the move 10-15", () => {
     const blackPiece = new Piece("b");
     const game = new CheckersGame();
-    game.start();
+    
     game.doMove("10", "15");
     expect(game.getPieceAtPosition("15")).toEqual(blackPiece);
 });
 
 test("doMove should fail when no arguments are provided", () => {
     const game = new CheckersGame();
-    game.start();
+    
     expect(() => game.doMove()).toThrow();
 });
 
 test("doMove should fail when one argument is provided", () => {
     const game = new CheckersGame();
-    game.start();
+    
     expect(() => game.doMove("12")).toThrow();
 });
 
 test("doMove should fail when no arguments are provided", () => {
     const game = new CheckersGame();
-    game.start();
+    
     game.doMove("10", "15");
     expect(() => game.doMove()).toThrow();
 });
 
 test("position 23 should be empty after the move 23-19", () => {
     const game = new CheckersGame();
-    game.start();
+    
     game.doMove("10", "15");
     game.doMove("23", "19");
     expect(game.getPieceAtPosition(23)).toBeNull();
@@ -479,7 +470,7 @@ test("position 23 should be empty after the move 23-19", () => {
 test("position 19 should have a white piece after the move 23-19", () => {
     const whitePiece = new Piece('w');
     const game = new CheckersGame();
-    game.start();
+    
     game.doMove("10", "15");
     game.doMove("23", "19");
     expect(game.getPieceAtPosition(19)).toEqual(whitePiece);
@@ -487,21 +478,21 @@ test("position 19 should have a white piece after the move 23-19", () => {
 
 test("should not be able to play the move 15-19 at the beginning of the game", () => {
     const game = new CheckersGame();
-    game.start();
+    
     expect(() => game.doMove("15", "19")).toThrow();
     
 });
 
 test("should not be able to play the move 17-14 after 11-15 at the beginning of the game", () => {
     const game = new CheckersGame();
-    game.start();
+    
     game.doMove("11", "15");
     expect(() => game.doMove("17", "14")).toThrow();
 });
 
 test("black should be able to play 15x24 after 10-15 24-19 at the beginning of the game", () => {
     const game = new CheckersGame();
-    game.start();
+    
     game.doMove("10", "15");
     game.doMove("24", "19");
     expect(() => game.doMove("15", "24")).not.toThrow();
@@ -509,7 +500,7 @@ test("black should be able to play 15x24 after 10-15 24-19 at the beginning of t
 
 test("black should be able to play 15x22 after 10-15 22-18 at the beginning of the game", () => {
     const game = new CheckersGame();
-    game.start();
+    
     game.doMove("10", "15");
     game.doMove("22", "18");
     expect(() => game.doMove("15", "22")).not.toThrow();
@@ -517,7 +508,7 @@ test("black should be able to play 15x22 after 10-15 22-18 at the beginning of t
 
 test("black should be able to play 19x28 when jump is available", () => {
     const game = new CheckersGame();
-    game.start();
+    
     game.doMove("10", "15");
     game.doMove("24", "20");
     game.doMove("9", "13");
@@ -529,7 +520,7 @@ test("black should be able to play 19x28 when jump is available", () => {
 
 test("black should not be able to play the move 18x25 when white piece is not on at position 22", () => {
     const game = new CheckersGame();
-    game.start();
+    
     game.doMove("10", "15");
     game.doMove("23", "19");
     game.doMove("7", "10");
@@ -546,7 +537,7 @@ test("black should not be able to play the move 18x25 when white piece is not on
 
 test("black should be able to play 18x25 when jump is available", () => {
     const game = new CheckersGame();
-    game.start();
+    
     game.doMove("10", "15");
     game.doMove("23", "19");
     game.doMove("7", "10");
@@ -558,7 +549,7 @@ test("black should be able to play 18x25 when jump is available", () => {
 
 test("black should not be able to play 14x23 when white piece is not on position 18", () => {
     const game = new CheckersGame();
-    game.start();
+    
     game.doMove("9", "14");
     game.doMove("23", "19");
     game.doMove("5", "9");
@@ -568,7 +559,7 @@ test("black should not be able to play 14x23 when white piece is not on position
 
 test("white should be able to play 18x11 after 10-15 23-18 11-16", () => {
     const game = new CheckersGame();
-    game.start();
+    
     game.doMove("10", "15");
     game.doMove("23", "18");
     game.doMove("11", "16");
@@ -577,7 +568,7 @@ test("white should be able to play 18x11 after 10-15 23-18 11-16", () => {
 
 test("white should be able to play 18x9 after 10-15 23-18 9-14", () => {
     const game = new CheckersGame();
-    game.start();
+    
     game.doMove("10", "15");
     game.doMove("23", "18");
     game.doMove("9", "14");
@@ -587,7 +578,7 @@ test("white should be able to play 18x9 after 10-15 23-18 9-14", () => {
 
 test("white should be able to play 14x5 when jump is available ", () => {
     const game = new CheckersGame();
-    game.start();
+    
     game.doMove("10", "15");
     game.doMove("23", "18");
     game.doMove("9", "13");
@@ -598,7 +589,7 @@ test("white should be able to play 14x5 when jump is available ", () => {
 
 test("white should not be able to play 18x9 when black piece is not on position 14", () => {
     const game = new CheckersGame();
-    game.start();
+    
     game.doMove("10", "15");
     game.doMove("23", "18");
     game.doMove("9", "13");
@@ -607,7 +598,7 @@ test("white should not be able to play 18x9 when black piece is not on position 
 
 test("white should not be able to play 23x16 when black piece is not on position 19", () => {
     const game = new CheckersGame();
-    game.start();
+    
     game.doMove("12", "16");
     game.doMove("21", "17");
     game.doMove("16", "20");
@@ -617,7 +608,7 @@ test("white should not be able to play 23x16 when black piece is not on position
 
 test("white should be able to play 14x7 when jump is available ", () => {
     const game = new CheckersGame();
-    game.start();
+    
     game.doMove("10", "15");
     game.doMove("23", "18");
     game.doMove("9", "13");
@@ -628,7 +619,7 @@ test("white should be able to play 14x7 when jump is available ", () => {
 
 test("black should not be able to play 12-16 when 15x24 can be played", () => {
     const game = new CheckersGame();
-    game.start();
+    
     game.doMove("10", "15");
     game.doMove("24", "19");
     expect(() => game.doMove("12", "16")).toThrow();
@@ -636,7 +627,7 @@ test("black should not be able to play 12-16 when 15x24 can be played", () => {
 
 test("black should not be able to play 9x16", () => {
     const game = new CheckersGame();
-    game.start();
+    
     game.doMove("11", "15");
     game.doMove("22", "17");
     game.doMove("8", "11");
@@ -646,7 +637,7 @@ test("black should not be able to play 9x16", () => {
 
 test("black should not be able to play 12x21", () => {
     const game = new CheckersGame();
-    game.start();
+    
     game.doMove("9", "13");
     game.doMove("21", "17");
     expect(() => game.doMove("12", "21")).toThrow();
@@ -654,7 +645,7 @@ test("black should not be able to play 12x21", () => {
 
 test("black should not be able to play 13x20", () => {
     const game = new CheckersGame();
-    game.start();
+    
     game.doMove("12", "16");
     game.doMove("21", "17");
     game.doMove("11", "15");
@@ -667,7 +658,7 @@ test("black should not be able to play 13x20", () => {
 });
 test("black should not be able to play 16x25", () => {
     const game = new CheckersGame();
-    game.start();
+    
     game.doMove("11", "16");
     game.doMove("22", "18");
     game.doMove("9", "13");
@@ -681,7 +672,7 @@ test("black should not be able to play 16x25", () => {
 
 test("white should not be able to play 24x17", () => {
     const game = new CheckersGame();
-    game.start();
+    
     game.doMove("12", "16");
     game.doMove("22", "18");
     game.doMove("16", "20");
@@ -690,14 +681,14 @@ test("white should not be able to play 24x17", () => {
 
 test("white should not be able to play 21x12", () => {
     const game = new CheckersGame();
-    game.start();
+    
     game.doMove("12", "16");
     expect(() => game.doMove("21", "12")).toThrow();
 });
 
 test("white should not be able to play 20x13", () => {
     const game = new CheckersGame();
-    game.start();
+    
     game.doMove("10", "14");
     game.doMove("24", "20");
     game.doMove("9", "13");
@@ -710,7 +701,7 @@ test("white should not be able to play 20x13", () => {
 
 test("white should not be able to play 17x8", () => {
     const game = new CheckersGame();
-    game.start();
+    
     game.doMove("9", "13");
     game.doMove("21", "17");
     game.doMove("11", "15");
@@ -721,7 +712,7 @@ test("white should not be able to play 17x8", () => {
 
 test("Black must be able to play 15x31 when possible", () => {
     const game = new CheckersGame();
-    game.start();
+    
     game.doMove("10", "15");
     game.doMove("23", "18");
     game.doMove("9", "13");
@@ -736,7 +727,7 @@ test("Black must be able to play 15x31 when possible", () => {
 
 test("position 19 should not have a piece after playing the move 15x24", () => {
     const game = new CheckersGame();
-    game.start();
+    
     game.doMove("10", "15");
     game.doMove("24", "19");
     game.doMove("15", "24");
@@ -745,7 +736,7 @@ test("position 19 should not have a piece after playing the move 15x24", () => {
 
 test("White must be able to play 19x3 when possible", () => {
     const game = new CheckersGame();
-    game.start();
+    
     game.doMove("10", "15");
     game.doMove("21", "17");
     game.doMove("12", "16");
@@ -763,7 +754,7 @@ test("White must be able to play 19x3 when possible", () => {
 
 test("position 14 should not have a piece after playing the move 8x19", () => {
     const game = new CheckersGame();
-    game.start();
+    
     game.doMove("10", "15");
     game.doMove("23", "18");
     game.doMove("9", "14");
@@ -773,7 +764,7 @@ test("position 14 should not have a piece after playing the move 8x19", () => {
 
 test("White piece should be promoted after playing 12x3", () => {
     const game = new CheckersGame();
-    game.start();
+    
     game.doMove("10", "15");
     game.doMove("21", "17");
     game.doMove("15", "18");
@@ -802,7 +793,7 @@ test("White piece should be promoted after playing 12x3", () => {
 
 test("Black piece should be promoted after playing 22x29", () => {
     const game = new CheckersGame();
-    game.start();
+    
     game.doMove("10", "15");
     game.doMove("23", "18");
     game.doMove("6", "10");
@@ -828,7 +819,7 @@ test("Black piece should be promoted after playing 22x29", () => {
 
 test("White king should be able to play 2x11", () => {
     const game = new CheckersGame();
-    game.start();
+    
     game.doMove("10", "15");
     game.doMove("21", "17");
     game.doMove("12", "16");
@@ -876,7 +867,7 @@ test("White king should be able to play 2x11", () => {
 
 test("White should be able to play 18x9 when 18x11 is also available", () => {
     const game = new CheckersGame();
-    game.start();
+    
     game.doMove("11", "15");
     game.doMove("21", "17");
     game.doMove("9", "13");
@@ -889,7 +880,7 @@ test("White should be able to play 18x9 when 18x11 is also available", () => {
 
 test("Black should be able to play 15x24 when 15x22 is also available", () => {
     const game = new CheckersGame();
-    game.start();
+    
     game.doMove("12", "16");
     game.doMove("22", "18");
     game.doMove("8", "12");
@@ -904,7 +895,7 @@ test("Black should be able to play 15x24 when 15x22 is also available", () => {
 
 test("White king should be able to play 1-5", () => {
     const game = new CheckersGame();
-    game.start();
+    
     game.doMove("9", "13");
     game.doMove("22", "18");
     game.doMove("10", "14");
@@ -928,7 +919,7 @@ test("White king should be able to play 1-5", () => {
 
 test("White king should be able to play 10x3 (10x19x12x3)", () => {
     const game = new CheckersGame();
-    game.start();
+    
     game.doMove("10", "15");
     game.doMove("21", "17");
     game.doMove("7", "10");
@@ -976,7 +967,7 @@ test("White king should be able to play 10x3 (10x19x12x3)", () => {
 
 test("Black king must be able to play 30x16 (30x23x16)", () => {
     const game = new CheckersGame();
-    game.start();
+    
     game.doMove("10", "15");
     game.doMove("21", "17");
     game.doMove("6", "10");
@@ -1013,7 +1004,7 @@ test("Black king must be able to play 30x16 (30x23x16)", () => {
 
 test("White should be winner if black has no moves", () => {
     const game = new CheckersGame();
-    game.start();
+    
     game.doMove("10", "15");
     game.doMove("21", "17");
     game.doMove("6", "10");
@@ -1075,7 +1066,7 @@ test("White should be winner if black has no moves", () => {
 
 test("Black king should be able to play the move 29-25", () => {
     const game = new CheckersGame();
-    game.start();
+    
     game.doMove("10", "15");
     game.doMove("22", "18");
     game.doMove("15", "22");
@@ -1112,7 +1103,7 @@ test("Black king should be able to play the move 29-25", () => {
 
 test("Black should be winner if white has no moves", () => {
     const game = new CheckersGame();
-    game.start();
+    
     game.doMove("10", "15");
     game.doMove("22", "18");
     game.doMove("15", "22");
@@ -1179,7 +1170,7 @@ test("Black should be winner if white has no moves", () => {
 
 test("getPlayableMovesByPosition should only return jump moves when a jump is playable", () => {
     const game = new CheckersGame();
-    game.start();
+    
     game.doMove("10", "15");
     game.doMove("21", "17");
     game.doMove("7", "10");
@@ -1191,7 +1182,7 @@ test("getPlayableMovesByPosition should only return jump moves when a jump is pl
 
 test("doMove should not accept 25x2 when there exists more than one such jump", () => {
     const game = new CheckersGame();
-    game.start();
+    
     game.doMove("9", "14");
     game.doMove("24", "20");
     game.doMove("11", "15");
@@ -1224,7 +1215,7 @@ test("doMove should not accept 25x2 when there exists more than one such jump", 
 
 test("doMove should accept 25x18x9x2 when playable", () => {
     const game = new CheckersGame();
-    game.start();
+    
     game.doMove("9", "14");
     game.doMove("24", "20");
     game.doMove("11", "15");
@@ -1257,14 +1248,14 @@ test("doMove should accept 25x18x9x2 when playable", () => {
 
 test("getPlayableMovesByPosition should accept string as input", () => {
     const game = new CheckersGame();
-    game.start();
+    
     const moves = game.getPlayableMovesByPosition("1");
     expect(moves.length).toBe(0);
 });
 
 test("getPlayableMovesByPosition should only return moves that are playable", () => {
     const game = new CheckersGame();
-    game.start();
+    
     const moves = game.getPlayableMovesByPosition("23");
     expect(moves.length).toBe(0);
 });
@@ -1272,7 +1263,7 @@ test("getPlayableMovesByPosition should only return moves that are playable", ()
 
 test("Should be able to play the move 2x11x18x9x2", () => {
     const game = new CheckersGame();
-    game.start();
+    
     game.doMove("9", "13");
     game.doMove("22", "18");
     game.doMove("10", "15");
@@ -1290,7 +1281,7 @@ test("Should be able to play the move 2x11x18x9x2", () => {
 
 test("Pieces should be reset after undoing the first move", () => {
     const game = new CheckersGame();
-    game.start();
+    
     game.doMove("9", "13");
     game.undoLastMove();
 
@@ -1313,7 +1304,7 @@ test("Pieces should be reset after undoing the first move", () => {
 
 test("Should be black's turn after undoing the first move", () => {
     const game = new CheckersGame();
-    game.start();
+    
     game.doMove("9", "13");
     game.undoLastMove();
 
@@ -1322,7 +1313,7 @@ test("Should be black's turn after undoing the first move", () => {
 
 test("Should be white's turn after undoing the second move", () => {
     const game = new CheckersGame();
-    game.start();
+    
     game.doMove("9", "13");
     game.doMove("22", "18");
     game.undoLastMove();
@@ -1332,13 +1323,13 @@ test("Should be white's turn after undoing the second move", () => {
 
 test("Should throw error when trying to undo move at the beginning of game", () => {
     const game = new CheckersGame();
-    game.start();
+    
     expect(() => game.undoLastMove()).toThrow();
 });
 
 test("should be black piece on 7, white piece on 10, and empty on 14 after undoing move 7x14", () => {
     const game = new CheckersGame();
-    game.start();
+    
     game.doMove("9", "13");
     game.doMove("22", "18");
     game.doMove("10", "15");
@@ -1358,7 +1349,7 @@ test("should be black piece on 7, white piece on 10, and empty on 14 after undoi
 
 test("board evaluation should be 0 at beginning of the game", () => {
     const game = new CheckersGame();
-    game.start();
+    
 
     const ai = new CheckersAi(game);
     const utility = ai.getBoardEvaluation(game);
@@ -1367,7 +1358,7 @@ test("board evaluation should be 0 at beginning of the game", () => {
 
 test("board evaluation should be > 0 when black has more pieces than white", () => {
     const game = new CheckersGame();
-    game.start();
+    
     game.doMove("10", "15");
     game.doMove("24", "19");
     game.doMove("15", "24");
@@ -1379,7 +1370,7 @@ test("board evaluation should be > 0 when black has more pieces than white", () 
 
 test("board evaluation should be < 0 when white has more pieces than black", () => {
     const game = new CheckersGame();
-    game.start();
+    
     game.doMove("10", "15");
     game.doMove("23", "18");
     game.doMove("15", "19");
@@ -1392,7 +1383,7 @@ test("board evaluation should be < 0 when white has more pieces than black", () 
 
 test("board evaluation should be INF when black wins", () => {
     const game = new CheckersGame();
-    game.start();
+    
     game.doMove("10", "15");
     game.doMove("22", "18");
     game.doMove("15", "22");
@@ -1461,7 +1452,7 @@ test("board evaluation should be INF when black wins", () => {
 
 test("board evaluation should be -INF when white wins", () => {
     const game = new CheckersGame();
-    game.start();
+    
     game.doMove("10", "15");
     game.doMove("21", "17");
     game.doMove("6", "10");
@@ -1525,7 +1516,7 @@ test("board evaluation should be -INF when white wins", () => {
 test("getNextMove should not return null when all moves result in a win", () => {
 
     const game = new CheckersGame();
-    game.start();
+    
     game.doMove("11", "15");
     game.doMove("21", "17");
     game.doMove("8", "11");
@@ -1621,7 +1612,7 @@ test("getNextMove should not return null when all moves result in a win", () => 
 
 test('Game should be draw after position has been repeated 3 times', () => {
     const game = new CheckersGame();
-    game.start();
+    
     game.doMove('10', '15');
     game.doMove('21', '17');
     game.doMove('15', '18');
@@ -1710,7 +1701,7 @@ test('Game should be draw after position has been repeated 3 times', () => {
 
 test('Game should be draw if no captures have been made in the last 40 moves and no unpromoted piece has advanced', () => {
     const game = new CheckersGame();
-    game.start();
+    
     game.doMove('10', '15');
     game.doMove('21', '17');
     game.doMove('15', '18');
@@ -1914,23 +1905,23 @@ test('Game should be draw if no captures have been made in the last 40 moves and
 
 test('Game should have playable moves after starting', () => {
     const game = new CheckersGame();
-    game.start();
+    
     const moves = game.getPlayableMoves();
     expect(moves).toBeTruthy();
 });
 
 test('getFen() should return current state of the board', () => {
     const game = new CheckersGame();
-    game.start();
+    
 
     const fen = game.getFen();
     expect(fen).toBeTruthy();
-})
+});
 
 test("draws calculated by ai should not affect the draw status of the actual game", () => {
     const game = new CheckersGame();
     const ai = new CheckersAi(game);
-    game.start();
+    
 
     game.doMove("10", "14");
     game.doMove("22", "18");
@@ -2008,4 +1999,16 @@ test("draws calculated by ai should not affect the draw status of the actual gam
     game.doMove(src, dst);
     
     expect(game.isDraw()).toBe(false);
+});
+test('constructFromFen should throw when piece notation is incorrect', () => {
+    const game = new CheckersGame();
+
+    const fen = 'W:W:B6,7,10,11,13,14,17,K,20,28';
+    expect(() => game.constructFromFen(fen)).toThrow();
+});
+test('constructFromFen should not throw when one player has no pieces left', () => {
+    const game = new CheckersGame();
+
+    const fen = 'W:W:B6,7,10,11,13,14,17,K18,20,28';
+    expect(() => game.constructFromFen(fen)).not.toThrow();
 });
